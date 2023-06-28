@@ -1,0 +1,74 @@
+/**
+ * Copyright 2016 Simon Edwards <simon@simonzone.com>
+ */
+@import "../general-gui/pxToRem";
+@import "../general-gui/variables";
+
+
+$tab-top-padding: 0;
+$tab-bar-bottom-border-color: #111111;
+$tab-max-width: 20rem;
+$tab-accent-width: 3px;
+
+UL.tabs {
+  display: block;
+
+  user-select: none;
+  -webkit-padding-start: 0;
+
+  list-style: none;
+  margin: 0;
+
+  padding: 0 0 0 1px;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-radius: 0;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  & > LI {
+    -webkit-margin-after: 0;
+    -webkit-margin-before: 0;
+    -webkit-padding-start: 0;
+  }
+
+  & > LI.tab {
+    position: relative;
+    display: block;
+    height: $ui-tab-height;
+    -webkit-user-drag: element;
+
+    padding: 0;
+    padding-left: 0.5rem;
+    margin: 0;
+    height: inherit;
+    font-size: inherit;
+    line-height: $ui-tab-height;
+    color: $tab-text-color;
+    background-color: $tab-background-color;
+    box-shadow: inherit;
+
+    border: 1px solid $tab-border-color;
+
+    max-width: $tab-max-width;
+
+    &.active {
+      color: $tab-text-color-active;
+      background-color: $tab-background-color-active;
+    }
+
+    &.active:before {
+      content: "";
+      display: inline-block;
+      position: absolute;
+      pointer-events: none;
+      left: -1px; // cover left border
+      width: $tab-accent-width;
+      height: $ui-tab-height;
+      background: $accent-color;
+    }
+  }
+}

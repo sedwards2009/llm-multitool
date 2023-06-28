@@ -1,0 +1,22 @@
+@import "general-gui/main";
+@import "app-components/tabs";
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.top-layout {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+
+  & > .session-tab {
+    padding: $panel-body-padding;
+  }
+}
+
+.session-editor {
+  display: flex;
+  flex-direction: row;
+}
