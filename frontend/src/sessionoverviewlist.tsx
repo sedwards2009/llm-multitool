@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import { SessionOverview } from "./data";
-import { useNavigate } from "react-router-dom";
+import { navigate } from "raviger";
 
 export interface Props {
   sessionOverview: SessionOverview;
@@ -11,7 +11,6 @@ export function SessionOverviewList({sessionOverview, selectedSessionId}: Props)
   return <ul className="tabs">
     {
       sessionOverview.sessionSummaries.map(s => {
-        const navigate = useNavigate();
         const onClick = () => {
           navigate(`/session/${s.id}`);
         };

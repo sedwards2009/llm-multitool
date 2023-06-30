@@ -1,28 +1,25 @@
-import { SessionOverviewList } from "./sessionoverviewlist";
-import { useLoaderData } from "react-router-dom";
-import { SessionEditor } from "./sessioneditor";
-import { LoaderResult } from "./dataloading";
+import { useEffect, useState } from "react";
+import { SessionOverview } from "./data";
+import { loadSessionOverview } from "./dataloading";
+import { MainApp } from "./mainapp";
 
 export function App() {
-  const loaderData = useLoaderData() as LoaderResult;
-  return (
-    <>
-      <h1>LLM Workbench</h1>
-      <div className="top-layout">
-        <div className="session-list">
-          <SessionOverviewList
-            sessionOverview={loaderData.sessionOverview}
-            selectedSessionId={loaderData.session?.id ?? null}
-          />
-          <button>+ New Session</button>
-        </div>
-        <div className="session-tab">
-        {loaderData.session &&
-          <SessionEditor
-            session={loaderData.session}
-          />}
-        </div>
-      </div>
-    </>
-  )
+
+  const [sessionOverview, setSessionOverview] = useState<SessionOverview | null>(null);
+
+  useEffect(() => {
+    if (sessionOverview == null) {
+      (async () => {
+        const loadedSessionOverview = await loadSessionOverview();
+        console.log(`Loaded the session overview`);
+        setSessionOverview(loadedSessionOverview);
+      })();
+    }
+  });
+
+  if (sessionOverview == null) {
+    return <div>Loading...</div>;
+  }
+
+  return <MainApp sessionOverview={sessionOverview} />;
 }
