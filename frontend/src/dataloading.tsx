@@ -5,35 +5,26 @@ export interface LoaderResult {
   session?: Session;
 }
 
-export async function loadSessionOverview(): Promise<SessionOverview> {
-  const sessionOverview: SessionOverview = {
-    sessionSummaries: [
-      {
-        id: '1111',
-        title: 'Qt event questions'
-      },
-      {
-        id: '2222',
-        title: 'Simple React component'
-      },
-    ]
-  };
-  return sessionOverview;
-}
+const SERVER_BASE_URL = "http://localhost:8080";
 
-export async function loadSession(sessionId: string): Promise<Session> {
-  if (sessionId === '1111') {
+export async function loadSessionOverview(): Promise<SessionOverview> {
+  const response = await fetch(`${SERVER_BASE_URL}/session`);
+  try {
+    return await response.json();
+  } catch (error) {
+    console.error("Could not parse JSON", error);
     return {
-      id: '1111',
-      title: 'Qt event questions',
-      prompt: 'Which Qt event is for a window gaining focus?',
-      responses: []
+      sessionSummaries: []
     };
   }
-  return {
-    id: '2222',
-    title: 'Simple React component',
-    prompt: 'Write out a simple React component.',
-    responses: []
-  };
+}
+
+export async function loadSession(sessionId: string): Promise<Session | null> {
+  const response = await fetch(`${SERVER_BASE_URL}/session/${sessionId}`);
+  try {
+    return await response.json();
+  } catch (error) {
+    console.error("Could not parse JSON", error);
+    return null;
+  }
 }
