@@ -8,6 +8,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+
+	"sedwards2009/llm-workbench/internal/data"
 )
 
 var logger gin.HandlerFunc = nil
@@ -73,8 +75,8 @@ func echo(wsSession *websocket.Conn) {
 	}
 }
 
-var sessionOverview SessionOverview = SessionOverview{
-	[]SessionSummary{
+var sessionOverview data.SessionOverview = data.SessionOverview{
+	SessionSummaries: []*data.SessionSummary{
 		{ID: "1111", Title: "Qt event questions"},
 		{ID: "2222", Title: "Simple React Component"},
 	},
@@ -88,20 +90,20 @@ func handleSessionGet(c *gin.Context) {
 	sessionId := c.Params.ByName("sessionId")
 
 	if sessionId == "1111" {
-		c.JSON(http.StatusOK, Session{
+		c.JSON(http.StatusOK, data.Session{
 			ID:        "1111",
 			Title:     "Qt event questions",
 			Prompt:    "Which Qt event is for a window gaining focus?",
-			Responses: []Response{},
+			Responses: []data.Response{},
 		})
 		return
 	}
 	if sessionId == "2222" {
-		c.JSON(http.StatusOK, Session{
+		c.JSON(http.StatusOK, data.Session{
 			ID:        "2222",
 			Title:     "Simple React component",
 			Prompt:    "Write out a simple React component.",
-			Responses: []Response{},
+			Responses: []data.Response{},
 		})
 		return
 	}
