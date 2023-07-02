@@ -4,13 +4,9 @@ import (
 	"testing"
 )
 
-func TestSave(t *testing.T) {
+func TestConcurrentSave(t *testing.T) {
 	tempDir := t.TempDir()
-	storage := NewSessionStorage(tempDir)
-
-	if len(storage.SessionOverview().SessionSummaries) != 0 {
-		t.Errorf("Empty SessionOverview didn't have empty array.")
-	}
+	storage := NewConcurrentSessionStorage(tempDir)
 	session := storage.NewSession()
 
 	sessionOverview := storage.SessionOverview()
@@ -19,14 +15,13 @@ func TestSave(t *testing.T) {
 	}
 }
 
-func TestRoundTrip(t *testing.T) {
+func TestConcurrentRoundTrip(t *testing.T) {
 	tempDir := t.TempDir()
-	storage := NewSessionStorage(tempDir)
+	storage := NewConcurrentSessionStorage(tempDir)
 	session := storage.NewSession()
 	session2 := storage.NewSession()
 
-	storage2 := NewSessionStorage(tempDir)
-	storage2.Scan()
+	storage2 := NewConcurrentSessionStorage(tempDir)
 	overview := storage2.SessionOverview()
 
 	if len(overview.SessionSummaries) != 2 {
@@ -43,9 +38,9 @@ func TestRoundTrip(t *testing.T) {
 	}
 }
 
-func TestNewWriteRead(t *testing.T) {
+func TestConcurrentNewWriteRead(t *testing.T) {
 	tempDir := t.TempDir()
-	storage := NewSessionStorage(tempDir)
+	storage := NewConcurrentSessionStorage(tempDir)
 	session := storage.NewSession()
 	session.Title = "A test"
 

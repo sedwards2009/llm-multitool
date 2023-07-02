@@ -52,7 +52,7 @@ func (this *SessionStorage) NewSession() *data.Session {
 	session.ID = uuid.NewString()
 	now := time.Now().UTC()
 	session.CreationTimestamp = now.Format(time.RFC3339)
-	this.SaveSession(session)
+	this.WriteSession(session)
 
 	return session
 }
@@ -73,7 +73,12 @@ func (this *SessionStorage) readSession(filePath string) *data.Session {
 	return &session
 }
 
-func (this *SessionStorage) SaveSession(session *data.Session) {
+func (this *SessionStorage) ReadSession(id string) *data.Session {
+	session := this.sessions[id]
+	return session
+}
+
+func (this *SessionStorage) WriteSession(session *data.Session) {
 	this.cacheSession(session)
 	this.writeSession(session)
 }
@@ -102,6 +107,7 @@ func (this *SessionStorage) writeSession(session *data.Session) {
 
 func (this *SessionStorage) SessionOverview() *data.SessionOverview {
 	sessionOverview := new(data.SessionOverview)
+	sessionOverview.SessionSummaries = make([]*data.SessionSummary, 0)
 
 	for s := range this.sessions {
 		sessionSummary := this.sessionSummary(this.sessions[s])
