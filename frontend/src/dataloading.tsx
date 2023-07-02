@@ -30,3 +30,15 @@ export async function loadSession(sessionId: string): Promise<Session | null> {
   }
   return null;
 }
+
+export async function newSession(): Promise<Session | null> {
+  const response = await fetch(`${SERVER_BASE_URL}/session`, {method: "POST"});
+  try {
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (error) {
+    console.error("Could not parse JSON", error);
+  }
+  return null;
+}

@@ -36,6 +36,7 @@ func setupRouter() *gin.Engine {
 	r.GET("/ping", handlePing)
 	r.Any("/websocket", wsHandler)
 	r.GET("/session", handleSessionOverview)
+	r.POST("/session", handleNewSession)
 	r.GET("/session/:sessionId", handleSessionGet)
 
 	return r
@@ -85,12 +86,22 @@ func handleSessionOverview(c *gin.Context) {
 	c.JSON(http.StatusOK, sessionOverview)
 }
 
+func handleNewSession(c *gin.Context) {
+	session := sessionStorage.NewSession()
+	if session != nil {
+		c.JSON(http.StatusOK, session)
+		return
+	}
+	c.String(http.StatusNotFound, "Session couldn't be created")
+}
+
 func handleSessionGet(c *gin.Context) {
 	sessionId := c.Params.ByName("sessionId")
 
 	session := sessionStorage.ReadSession(sessionId)
 	if session != nil {
 		c.JSON(http.StatusOK, session)
+		return
 	}
 	c.String(http.StatusNotFound, "Session not found")
 }

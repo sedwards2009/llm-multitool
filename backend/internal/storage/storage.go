@@ -50,8 +50,10 @@ func (this *SessionStorage) Scan() {
 func (this *SessionStorage) NewSession() *data.Session {
 	session := new(data.Session)
 	session.ID = uuid.NewString()
+	session.Title = "(new session)"
 	now := time.Now().UTC()
 	session.CreationTimestamp = now.Format(time.RFC3339)
+	session.Responses = make([]data.Response, 0)
 	this.WriteSession(session)
 
 	return session

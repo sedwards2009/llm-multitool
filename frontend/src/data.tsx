@@ -6,6 +6,7 @@ export interface SessionOverview {
 export interface SessionSummary {
   id: string;
   title: string;
+  creationTimestamp: string;
 }
 
 export interface Root {
