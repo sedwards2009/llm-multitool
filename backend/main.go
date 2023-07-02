@@ -25,12 +25,13 @@ func setupRouter() *gin.Engine {
 	r.Use(logger)
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"GET"},
-		AllowHeaders:     []string{"Origin"},
-		ExposeHeaders:    []string{"Content-Length"},
+		// AllowOrigins:     []string{"*"},
+		AllowAllOrigins:  true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type"},
+		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
 		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
+		MaxAge:           10 * time.Second,
 	}))
 
 	r.GET("/ping", handlePing)
@@ -38,6 +39,7 @@ func setupRouter() *gin.Engine {
 	r.GET("/session", handleSessionOverview)
 	r.POST("/session", handleNewSession)
 	r.GET("/session/:sessionId", handleSessionGet)
+	r.PUT("/session/:sessionId/prompt", handleSessionPromptPut)
 
 	return r
 }
@@ -104,6 +106,29 @@ func handleSessionGet(c *gin.Context) {
 		return
 	}
 	c.String(http.StatusNotFound, "Session not found")
+}
+
+func handleSessionPromptPut(c *gin.Context) {
+	sessionId := c.Params.ByName("sessionId")
+	session := sessionStorage.ReadSession(sessionId)
+	if session == nil {
+		c.String(http.StatusNotFound, "Session not found")
+		return
+	}
+
+	var data struct {
+		Prompt string `json:"prompt"`
+	}
+
+	if err := c.ShouldBindJSON(&data); err != nil {
+		c.String(http.StatusBadRequest, "Couldn't parse the JSON PUT body.")
+		return
+	}
+
+	session.Prompt = data.Prompt
+	sessionStorage.WriteSession(session)
+
+	c.JSON(http.StatusOK, session)
 }
 
 func main() {

@@ -1,3 +1,4 @@
+import * as _ from "lodash";
 import { Session, SessionOverview } from "./data";
 
 export interface LoaderResult {
@@ -42,3 +43,30 @@ export async function newSession(): Promise<Session | null> {
   }
   return null;
 }
+
+let saveSessionPromptQueue = new Map<string, string>();
+
+export function setSessionPrompt(session: Session, prompt: string): Session {
+  saveSessionPromptQueue.set(session.id, prompt);
+  flushSessionPromptQueue();
+  return {...session, prompt};
+}
+
+async function processSessionPromptQueue(): Promise<void> {
+  const workingSessionPromptQueue = saveSessionPromptQueue;
+  saveSessionPromptQueue = new Map<string, string>();
+  for (const [sessionId, prompt] of workingSessionPromptQueue.entries()) {
+    await fetch(`${SERVER_BASE_URL}/session/${sessionId}/prompt`,
+      {
+        method: "PUT",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({prompt})
+    });
+  }
+}
+
+const flushSessionPromptQueue = _.throttle(() => {
+  (async () => {
+    processSessionPromptQueue();
+  })();
+}, 1000);

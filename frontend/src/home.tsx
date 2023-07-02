@@ -13,17 +13,6 @@ export interface Props {
 }
 
 export function Home({ sessionOverview, sessionId, onSessionChange }: Props): JSX.Element {
-  const [session, setSession] = useState<Session | null>(null);
-  useEffect(() => {
-    (async () => {
-      const loadedSession = await loadSession(sessionId);
-      if (loadedSession == null) {
-        navigate("/");
-      }
-      setSession(loadedSession);
-    })();
-  }, [sessionId]);
-
   return (
     <div className="top-layout">
       <div className="session-list">
@@ -34,8 +23,10 @@ export function Home({ sessionOverview, sessionId, onSessionChange }: Props): JS
         <NewSessionButton onSessionChange={onSessionChange} />
       </div>
       <div className="session-tab">
-        { session && <SessionEditor key={sessionId} session={session} /> }
-        { (session ==null) && <span>Loading</span> }
+        <SessionEditor
+          key={sessionId}
+          sessionId={sessionId}
+        />
       </div>
   </div>
   );
