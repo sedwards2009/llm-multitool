@@ -22,9 +22,11 @@ export async function loadSessionOverview(): Promise<SessionOverview> {
 export async function loadSession(sessionId: string): Promise<Session | null> {
   const response = await fetch(`${SERVER_BASE_URL}/session/${sessionId}`);
   try {
-    return await response.json();
+    if (response.ok) {
+      return await response.json();
+    }
   } catch (error) {
     console.error("Could not parse JSON", error);
-    return null;
   }
+  return null;
 }

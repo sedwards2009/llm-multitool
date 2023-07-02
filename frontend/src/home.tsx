@@ -3,6 +3,7 @@ import { Session, SessionOverview } from "./data";
 import { SessionEditor } from "./sessioneditor";
 import { SessionOverviewList } from "./sessionoverviewlist";
 import { loadSession } from "./dataloading";
+import { navigate } from "raviger";
 
 export interface Props {
   sessionOverview: SessionOverview;
@@ -15,6 +16,9 @@ export function Home({ sessionOverview, sessionId }: Props): JSX.Element {
   useEffect(() => {
     (async () => {
       const loadedSession = await loadSession(sessionId);
+      if (loadedSession == null) {
+        navigate("/");
+      }
       setSession(loadedSession);
     })();
   }, [sessionId]);

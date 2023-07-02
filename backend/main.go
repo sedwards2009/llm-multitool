@@ -9,10 +9,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 
-	"sedwards2009/llm-workbench/internal/data"
+	"sedwards2009/llm-workbench/internal/storage"
 )
 
 var logger gin.HandlerFunc = nil
+var sessionStorage *storage.ConcurrentSessionStorage = nil
+
+func setupStorage() {
+	sessionStorage = storage.NewConcurrentSessionStorage("/home/sbe/devel/llm-workbench/data")
+}
 
 func setupRouter() *gin.Engine {
 	r := gin.Default()
@@ -75,44 +80,24 @@ func echo(wsSession *websocket.Conn) {
 	}
 }
 
-var sessionOverview data.SessionOverview = data.SessionOverview{
-	SessionSummaries: []*data.SessionSummary{
-		{ID: "1111", Title: "Qt event questions"},
-		{ID: "2222", Title: "Simple React Component"},
-	},
-}
-
 func handleSessionOverview(c *gin.Context) {
+	sessionOverview := sessionStorage.SessionOverview()
 	c.JSON(http.StatusOK, sessionOverview)
 }
 
 func handleSessionGet(c *gin.Context) {
 	sessionId := c.Params.ByName("sessionId")
 
-	if sessionId == "1111" {
-		c.JSON(http.StatusOK, data.Session{
-			ID:        "1111",
-			Title:     "Qt event questions",
-			Prompt:    "Which Qt event is for a window gaining focus?",
-			Responses: []data.Response{},
-		})
-		return
-	}
-	if sessionId == "2222" {
-		c.JSON(http.StatusOK, data.Session{
-			ID:        "2222",
-			Title:     "Simple React component",
-			Prompt:    "Write out a simple React component.",
-			Responses: []data.Response{},
-		})
-		return
+	session := sessionStorage.ReadSession(sessionId)
+	if session != nil {
+		c.JSON(http.StatusOK, session)
 	}
 	c.String(http.StatusNotFound, "Session not found")
 }
 
 func main() {
 	// parsedArgs, errorString := argsparser.Parse(&os.Args)
-
+	setupStorage()
 	r := setupRouter()
 	// Listen and Server in 0.0.0.0:8080
 	r.Run(":8080")
