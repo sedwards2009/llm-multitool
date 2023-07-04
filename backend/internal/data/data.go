@@ -21,11 +21,11 @@ type Root struct {
 }
 
 type Session struct {
-	ID                string     `json:"id"`
-	CreationTimestamp string     `json:"creationTimestamp"`
-	Title             string     `json:"title"`
-	Prompt            string     `json:"prompt"`
-	Responses         []Response `json:"responses"`
+	ID                string      `json:"id"`
+	CreationTimestamp string      `json:"creationTimestamp"`
+	Title             string      `json:"title"`
+	Prompt            string      `json:"prompt"`
+	Responses         []*Response `json:"responses"`
 }
 
 // -------------------------------------------------------------------------

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
@@ -53,7 +54,7 @@ func (this *SessionStorage) NewSession() *data.Session {
 	session.Title = "(new session)"
 	now := time.Now().UTC()
 	session.CreationTimestamp = now.Format(time.RFC3339)
-	session.Responses = make([]data.Response, 0)
+	session.Responses = []*data.Response{}
 	this.WriteSession(session)
 
 	return session
@@ -124,6 +125,17 @@ func (this *SessionStorage) SessionOverview() *data.SessionOverview {
 	return sessionOverview
 }
 
+func copySession(srcSession *data.Session) *data.Session {
+	copy := &data.Session{
+		ID:                srcSession.ID,
+		CreationTimestamp: srcSession.CreationTimestamp,
+		Title:             srcSession.Title,
+		Prompt:            srcSession.Prompt,
+		Responses:         srcSession.Responses,
+	}
+	return copy
+}
+
 func (this *SessionStorage) sessionSummary(session *data.Session) *data.SessionSummary {
 	summary, present := this.sessionSummaries[session.ID]
 	if present {
@@ -136,4 +148,23 @@ func (this *SessionStorage) sessionSummary(session *data.Session) *data.SessionS
 	}
 	this.sessionSummaries[session.ID] = newSummary
 	return newSummary
+}
+
+func (this *SessionStorage) NewResponse(sessionId string) (*data.Response, error) {
+	session := this.ReadSession(sessionId)
+	if session == nil {
+		return nil, errors.New("Session not found for sessionId.")
+	}
+
+	newResponsesSlice := session.Responses[:]
+	newResponse := &data.Response{
+		Status: data.ResponseStatus_Pending,
+	}
+	newResponsesSlice = append(newResponsesSlice, newResponse)
+
+	newSession := copySession(session)
+	newSession.Responses = newResponsesSlice
+
+	this.WriteSession(newSession)
+	return newResponse, nil
 }

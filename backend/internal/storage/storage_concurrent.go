@@ -18,38 +18,55 @@ func NewConcurrentSessionStorage(storagePath string) *ConcurrentSessionStorage {
 	return instance
 }
 
+type messageType uint8
+
+const (
+	messageType_ReadSessionOverview messageType = iota
+	messageType_ReadSession
+	messageType_NewSession
+	messageType_WriteSession
+)
+
 type message struct {
-	readSessionOverview bool
-	readSession         string
-	newSession          bool
-	writeSession        *data.Session
-	out                 chan *response
+	messageType messageType
+	out         chan *response
+	payload     any
+}
+
+type readSessionPayload struct {
+	sessionId string
+}
+
+type writeSessionPayload struct {
+	session *data.Session
 }
 
 type response struct {
 	sessionOverview *data.SessionOverview
 	session         *data.Session
+	response        *data.Response
 }
 
 func worker(sessionStorage *SessionStorage, in chan *message) {
 	for message := range in {
-		if message.readSessionOverview {
+		switch message.messageType {
+		case messageType_ReadSessionOverview:
 			message.out <- &response{
 				sessionOverview: sessionStorage.SessionOverview(),
 			}
-		}
-		if message.newSession {
+		case messageType_ReadSession:
+			payload := message.payload.(*readSessionPayload)
+			message.out <- &response{
+				session: sessionStorage.ReadSession(payload.sessionId),
+			}
+		case messageType_NewSession:
 			message.out <- &response{
 				session: sessionStorage.NewSession(),
 			}
-		}
-		if message.readSession != "" {
-			message.out <- &response{
-				session: sessionStorage.ReadSession(message.readSession),
-			}
-		}
-		if message.writeSession != nil {
-			sessionStorage.WriteSession(message.writeSession)
+
+		case messageType_WriteSession:
+			payload := message.payload.(*writeSessionPayload)
+			sessionStorage.WriteSession(payload.session)
 			message.out <- &response{}
 		}
 	}
@@ -58,39 +75,45 @@ func worker(sessionStorage *SessionStorage, in chan *message) {
 func (this *ConcurrentSessionStorage) SessionOverview() *data.SessionOverview {
 	returnChannel := make(chan *response)
 	this.toWorker <- &message{
-		readSessionOverview: true,
-		out:                 returnChannel,
+		messageType: messageType_ReadSessionOverview,
+		out:         returnChannel,
 	}
 	response := <-returnChannel
+	close(returnChannel)
 	return response.sessionOverview
 }
 
 func (this *ConcurrentSessionStorage) NewSession() *data.Session {
 	returnChannel := make(chan *response)
 	this.toWorker <- &message{
-		newSession: true,
-		out:        returnChannel,
+		messageType: messageType_NewSession,
+		out:         returnChannel,
 	}
 	response := <-returnChannel
+	close(returnChannel)
 	return response.session
 }
 
 func (this *ConcurrentSessionStorage) ReadSession(id string) *data.Session {
 	returnChannel := make(chan *response)
 	this.toWorker <- &message{
-		readSession: id,
+		messageType: messageType_ReadSession,
 		out:         returnChannel,
+		payload:     &readSessionPayload{sessionId: id},
 	}
 	response := <-returnChannel
+	close(returnChannel)
 	return response.session
 }
 
 func (this *ConcurrentSessionStorage) WriteSession(session *data.Session) {
 	returnChannel := make(chan *response)
 	this.toWorker <- &message{
-		writeSession: session,
-		out:          returnChannel,
+		messageType: messageType_WriteSession,
+		out:         returnChannel,
+		payload:     &writeSessionPayload{session: session},
 	}
 	<-returnChannel
+	close(returnChannel)
 	return
 }
