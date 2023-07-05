@@ -1,9 +1,6 @@
-import { useEffect, useState } from "react";
-import { Session, SessionOverview } from "./data";
+import { SessionOverview } from "./data";
 import { SessionEditor } from "./sessioneditor";
 import { SessionOverviewList } from "./sessionoverviewlist";
-import { loadSession } from "./dataloading";
-import { navigate } from "raviger";
 import { NewSessionButton } from "./newsessionbutton";
 
 export interface Props {

@@ -25,6 +25,7 @@ const (
 	messageType_ReadSession
 	messageType_NewSession
 	messageType_WriteSession
+	messageType_NewResponse
 )
 
 type message struct {
@@ -41,10 +42,15 @@ type writeSessionPayload struct {
 	session *data.Session
 }
 
+type newResponsePayload struct {
+	sessionId string
+}
+
 type response struct {
 	sessionOverview *data.SessionOverview
 	session         *data.Session
 	response        *data.Response
+	err             *error
 }
 
 func worker(sessionStorage *SessionStorage, in chan *message) {
@@ -54,11 +60,13 @@ func worker(sessionStorage *SessionStorage, in chan *message) {
 			message.out <- &response{
 				sessionOverview: sessionStorage.SessionOverview(),
 			}
+
 		case messageType_ReadSession:
 			payload := message.payload.(*readSessionPayload)
 			message.out <- &response{
 				session: sessionStorage.ReadSession(payload.sessionId),
 			}
+
 		case messageType_NewSession:
 			message.out <- &response{
 				session: sessionStorage.NewSession(),
@@ -68,6 +76,14 @@ func worker(sessionStorage *SessionStorage, in chan *message) {
 			payload := message.payload.(*writeSessionPayload)
 			sessionStorage.WriteSession(payload.session)
 			message.out <- &response{}
+
+		case messageType_NewResponse:
+			payload := message.payload.(*newResponsePayload)
+			newResponse, err := sessionStorage.NewResponse(payload.sessionId)
+			message.out <- &response{
+				response: newResponse,
+				err:      &err,
+			}
 		}
 	}
 }
@@ -116,4 +132,16 @@ func (this *ConcurrentSessionStorage) WriteSession(session *data.Session) {
 	<-returnChannel
 	close(returnChannel)
 	return
+}
+
+func (this *ConcurrentSessionStorage) NewResponse(sessionId string) (*data.Response, error) {
+	returnChannel := make(chan *response)
+	this.toWorker <- &message{
+		messageType: messageType_NewResponse,
+		out:         returnChannel,
+		payload:     &newResponsePayload{sessionId: sessionId},
+	}
+	response := <-returnChannel
+	close(returnChannel)
+	return response.response, *(response.err)
 }

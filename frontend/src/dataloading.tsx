@@ -70,3 +70,21 @@ const flushSessionPromptQueue = _.throttle(() => {
     processSessionPromptQueue();
   })();
 }, 1000);
+
+async function flushQueues(): Promise<void> {
+  await processSessionPromptQueue();
+}
+
+export async function newResponse(session: Session): Promise<Response | null> {
+  await flushQueues();
+
+  const response = await fetch(`${SERVER_BASE_URL}/session/${session.id}/response`, {method: "POST"});
+  try {
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (error) {
+    console.error("Could not parse JSON", error);
+  }
+  return null;
+}

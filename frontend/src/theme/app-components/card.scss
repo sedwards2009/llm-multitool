@@ -1,0 +1,15 @@
+@import "../general-gui/pxToRem";
+@import "../general-gui/variables";
+
+$package-card-background-color: lighten($tool-panel-background-color, 8%);
+
+.card {
+  padding: $component-padding-vertical*1.5 $component-padding-horizontal*1.5;
+  margin-bottom: $component-padding-vertical;
+  font-size: 1.2rem;
+  list-style-type: none;
+  border-radius: $border-radius*2;
+  border: 1px solid $base-border-color;
+  background-color: $package-card-background-color;
+  overflow: hidden;
+}

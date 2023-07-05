@@ -49,14 +49,14 @@ func (this *SessionStorage) Scan() {
 }
 
 func (this *SessionStorage) NewSession() *data.Session {
-	session := new(data.Session)
-	session.ID = uuid.NewString()
-	session.Title = "(new session)"
 	now := time.Now().UTC()
-	session.CreationTimestamp = now.Format(time.RFC3339)
-	session.Responses = []*data.Response{}
+	session := &data.Session{
+		ID:                uuid.NewString(),
+		Title:             "(new session)",
+		CreationTimestamp: now.Format(time.RFC3339),
+		Responses:         []*data.Response{},
+	}
 	this.WriteSession(session)
-
 	return session
 }
 
@@ -157,8 +157,13 @@ func (this *SessionStorage) NewResponse(sessionId string) (*data.Response, error
 	}
 
 	newResponsesSlice := session.Responses[:]
+	now := time.Now().UTC()
 	newResponse := &data.Response{
-		Status: data.ResponseStatus_Pending,
+		ID:                uuid.NewString(),
+		CreationTimestamp: now.Format(time.RFC3339),
+		Status:            data.ResponseStatus_Pending,
+		Prompt:            session.Prompt,
+		Text:              "",
 	}
 	newResponsesSlice = append(newResponsesSlice, newResponse)
 

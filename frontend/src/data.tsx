@@ -15,11 +15,18 @@ export interface Root {
 
 export interface Session {
   id: string;
+  creationTimestamp: string;
   title: string;
   prompt: string;
   responses: Response[];
 }
 
+export type ResponseStatus = "done" | "pending" | "running";
+
 export interface Response {
+  id: string;
+  creationTimestamp: string;
+  status: ResponseStatus;
+  prompt: string;
   text: string;
 }

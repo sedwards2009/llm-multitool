@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -40,6 +41,7 @@ func setupRouter() *gin.Engine {
 	r.POST("/session", handleNewSession)
 	r.GET("/session/:sessionId", handleSessionGet)
 	r.PUT("/session/:sessionId/prompt", handleSessionPromptPut)
+	r.POST("/session/:sessionId/response", handleResponsePost)
 
 	return r
 }
@@ -129,6 +131,23 @@ func handleSessionPromptPut(c *gin.Context) {
 	sessionStorage.WriteSession(session)
 
 	c.JSON(http.StatusOK, session)
+}
+
+func handleResponsePost(c *gin.Context) {
+	sessionId := c.Params.ByName("sessionId")
+	session := sessionStorage.ReadSession(sessionId)
+	if session == nil {
+		c.String(http.StatusNotFound, "Session not found")
+		return
+	}
+
+	response, err := sessionStorage.NewResponse(sessionId)
+	if err != nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("Error occured while creating new response: %v", err))
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 func main() {

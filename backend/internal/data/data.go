@@ -83,6 +83,7 @@ func ParseResponseStatus(statusString string) (ResponseStatus, error) {
 //-------------------------------------------------------------------------
 
 type Response struct {
+	ID                string         `json:"id"`
 	CreationTimestamp string         `json:"creationTimestamp"`
 	Status            ResponseStatus `json:"status"`
 	Prompt            string         `json:"prompt"`
