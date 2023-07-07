@@ -28,7 +28,7 @@ func setupRouter() *gin.Engine {
 	r.Use(cors.New(cors.Config{
 		// AllowOrigins:     []string{"*"},
 		AllowAllOrigins:  true,
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH"},
 		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
 		AllowCredentials: true,
@@ -42,6 +42,7 @@ func setupRouter() *gin.Engine {
 	r.GET("/session/:sessionId", handleSessionGet)
 	r.PUT("/session/:sessionId/prompt", handleSessionPromptPut)
 	r.POST("/session/:sessionId/response", handleResponsePost)
+	r.DELETE("/session/:sessionId/response/:responseId", handleResponseDelete)
 
 	return r
 }
@@ -148,6 +149,19 @@ func handleResponsePost(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
+}
+
+func handleResponseDelete(c *gin.Context) {
+	sessionId := c.Params.ByName("sessionId")
+	responseId := c.Params.ByName("responseId")
+
+	err := sessionStorage.DeleteResponse(sessionId, responseId)
+	if err != nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("Error occured while deleting response: %v", err))
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
 
 func main() {

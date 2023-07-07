@@ -4,6 +4,7 @@
 $package-card-background-color: lighten($tool-panel-background-color, 8%);
 
 .card {
+  position: relative;
   padding: $component-padding-vertical*1.5 $component-padding-horizontal*1.5;
   margin-bottom: $component-padding-vertical;
   font-size: 1.2rem;
@@ -12,4 +13,14 @@ $package-card-background-color: lighten($tool-panel-background-color, 8%);
   border: 1px solid $base-border-color;
   background-color: $package-card-background-color;
   overflow: hidden;
+
+  & h3 {
+    margin-top: 0;
+  }
+
+  & .controls {
+    position: absolute;
+    right: $component-padding-horizontal*1.5;
+    top: $component-padding-horizontal*1.5;
+  }
 }

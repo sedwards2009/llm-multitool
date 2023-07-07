@@ -1,7 +1,7 @@
 import { ChangeEvent, useEffect, useState } from "react";
 import { Session } from "./data";
 import { navigate } from "raviger";
-import { loadSession, newResponse, setSessionPrompt } from "./dataloading";
+import { loadSession, newResponse, setSessionPrompt, deleteResponse } from "./dataloading";
 import { ResponseEditor } from "./responseeditor";
 
 export interface Props {
@@ -27,6 +27,13 @@ export function SessionEditor({sessionId}: Props): JSX.Element {
     setSession(setSessionPrompt(session as Session, event.target.value));
   }
 
+  const onDeleteClicked = (responseId: string) => {
+    (async () => {
+      await deleteResponse((session as Session).id, responseId);
+      await loadSessionData();
+    })();
+  };
+
   const onSubmitClicked = () => {
     (async () => {
       await newResponse(session as Session);
@@ -49,7 +56,7 @@ export function SessionEditor({sessionId}: Props): JSX.Element {
         <div className="session-response-pane">
           <h3>Responses</h3>
           {
-            session.responses.map(r => <ResponseEditor response={r} key={r.id} />)
+            session.responses.map(r => <ResponseEditor response={r} key={r.id} onDeleteClicked={onDeleteClicked} />)
           }
         </div>
       </>

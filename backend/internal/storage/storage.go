@@ -173,3 +173,26 @@ func (this *SessionStorage) NewResponse(sessionId string) (*data.Response, error
 	this.WriteSession(newSession)
 	return newResponse, nil
 }
+
+func (this *SessionStorage) DeleteResponse(sessionId string, responseId string) error {
+	session := this.ReadSession(sessionId)
+	if session == nil {
+		return errors.New("Session not found for sessionId.")
+	}
+
+	newResponses := make([]*data.Response, 0)
+	for _, response := range session.Responses {
+		if response.ID != responseId {
+			newResponses = append(newResponses, response)
+		}
+	}
+
+	if len(newResponses) == len(session.Responses) {
+		return errors.New("Response not found for responseId.")
+	}
+
+	newSession := copySession(session)
+	newSession.Responses = newResponses
+	this.WriteSession(newSession)
+	return nil
+}

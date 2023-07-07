@@ -88,3 +88,10 @@ export async function newResponse(session: Session): Promise<Response | null> {
   }
   return null;
 }
+
+export async function deleteResponse(sessionId: string, responseId: string): Promise<boolean> {
+  await flushQueues();
+
+  const response = await fetch(`${SERVER_BASE_URL}/session/${sessionId}/response/${responseId}`, {method: "DELETE"});
+  return response.ok;
+}

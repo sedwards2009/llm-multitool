@@ -52,3 +52,25 @@ func TestConcurrentNewWriteRead(t *testing.T) {
 		t.Errorf("TestNewWriteRead failed. Expected '%s', got '%s'", "A test", session2.Title)
 	}
 }
+
+func TestConcurrentResponseDelete(t *testing.T) {
+	tempDir := t.TempDir()
+	storage := NewSessionStorage(tempDir)
+	session := storage.NewSession()
+	session.Title = "A test"
+
+	storage.WriteSession(session)
+
+	id := session.ID
+	response, err := storage.NewResponse(session.ID)
+	if err != nil {
+
+	}
+
+	storage.DeleteResponse(session.ID, response.ID)
+
+	session2 := storage.ReadSession(id)
+	if len(session2.Responses) != 0 {
+		t.Errorf("TestNewResponseWriteRead failed. Expected len(session2.Responses), got %d", len(session2.Responses))
+	}
+}

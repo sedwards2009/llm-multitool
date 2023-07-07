@@ -26,6 +26,7 @@ const (
 	messageType_NewSession
 	messageType_WriteSession
 	messageType_NewResponse
+	messageType_DeleteResponse
 )
 
 type message struct {
@@ -44,6 +45,11 @@ type writeSessionPayload struct {
 
 type newResponsePayload struct {
 	sessionId string
+}
+
+type deleteResponsePayload struct {
+	sessionId  string
+	responseId string
 }
 
 type response struct {
@@ -84,7 +90,15 @@ func worker(sessionStorage *SessionStorage, in chan *message) {
 				response: newResponse,
 				err:      &err,
 			}
+
+		case messageType_DeleteResponse:
+			payload := message.payload.(*deleteResponsePayload)
+			err := sessionStorage.DeleteResponse(payload.sessionId, payload.responseId)
+			message.out <- &response{
+				err: &err,
+			}
 		}
+
 	}
 }
 
@@ -144,4 +158,16 @@ func (this *ConcurrentSessionStorage) NewResponse(sessionId string) (*data.Respo
 	response := <-returnChannel
 	close(returnChannel)
 	return response.response, *(response.err)
+}
+
+func (this *ConcurrentSessionStorage) DeleteResponse(sessionId string, responseId string) error {
+	returnChannel := make(chan *response)
+	this.toWorker <- &message{
+		messageType: messageType_DeleteResponse,
+		out:         returnChannel,
+		payload:     &deleteResponsePayload{sessionId: sessionId, responseId: responseId},
+	}
+	response := <-returnChannel
+	close(returnChannel)
+	return *(response.err)
 }
