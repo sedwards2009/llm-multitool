@@ -1,3 +1,4 @@
+import ReactMarkdown from "react-markdown";
 import { Response } from "./data";
 
 export interface Props {
@@ -11,8 +12,9 @@ export function ResponseEditor({response, onDeleteClicked}: Props): JSX.Element 
     <div className="controls">
       <button className="microtool danger" onClick={() => onDeleteClicked(response.id)}><i className="fa fa-times"></i></button>
     </div>
-    {response.prompt}<br />
+    <ReactMarkdown children={response.prompt} />
+    <br />
     <h4>Output:</h4>
-    {response.text}
+    <ReactMarkdown children={response.text} />
   </div>;
 }

@@ -1,6 +1,7 @@
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, KeyboardEventHandler, useEffect, useState } from "react";
 import { Session } from "./data";
 import { navigate } from "raviger";
+import TextareaAutosize from "react-textarea-autosize";
 import { loadSession, newResponse, setSessionPrompt, deleteResponse, SessionMonitor } from "./dataloading";
 import { ResponseEditor } from "./responseeditor";
 
@@ -63,17 +64,25 @@ export function SessionEditor({sessionId}: Props): JSX.Element {
     })();
   };
 
+  const onKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
+    if (e.code === "Enter" && e.shiftKey) {
+      onSubmitClicked();
+      e.preventDefault();
+    }
+  };
+
   return <div className="session-editor">
     {session == null && <div>Loading</div>}
     {session && <>
         <div className="session-prompt-pane">
           <h3>Prompt</h3>
-          <textarea
+          <TextareaAutosize
             className="char-width-20"
             value={session.prompt}
             onChange={onPromptChange}
+            onKeyDown={onKeyDown}
           /><br />
-          <button className="success" onClick={onSubmitClicked}>Submit</button>
+          <button className="success" title="Shift+Enter" onClick={onSubmitClicked}>Submit</button>
         </div>
         <div className="session-response-pane">
           <h3>Responses</h3>
