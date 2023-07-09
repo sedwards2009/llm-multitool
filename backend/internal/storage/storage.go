@@ -136,6 +136,17 @@ func copySession(srcSession *data.Session) *data.Session {
 	return copy
 }
 
+func copyResponse(srcResponse *data.Response) *data.Response {
+	copy := &data.Response{
+		ID:                srcResponse.ID,
+		CreationTimestamp: srcResponse.CreationTimestamp,
+		Status:            srcResponse.Status,
+		Prompt:            srcResponse.Prompt,
+		Text:              srcResponse.Text,
+	}
+	return copy
+}
+
 func (this *SessionStorage) sessionSummary(session *data.Session) *data.SessionSummary {
 	summary, present := this.sessionSummaries[session.ID]
 	if present {
@@ -195,4 +206,45 @@ func (this *SessionStorage) DeleteResponse(sessionId string, responseId string) 
 	newSession.Responses = newResponses
 	this.WriteSession(newSession)
 	return nil
+}
+
+func (this *SessionStorage) modifyToResponse(sessionId string, responseId string, editor func(r *data.Response)) error {
+	session := this.ReadSession(sessionId)
+	if session == nil {
+		return errors.New("Session not found for sessionId.")
+	}
+
+	newResponses := make([]*data.Response, 0)
+	found := false
+	for _, response := range session.Responses {
+		if response.ID == responseId {
+			found = true
+			newResponse := copyResponse(response)
+			editor(newResponse)
+			newResponses = append(newResponses, newResponse)
+		} else {
+			newResponses = append(newResponses, response)
+		}
+	}
+
+	if !found {
+		return errors.New("Response not found for responseId.")
+	}
+
+	newSession := copySession(session)
+	newSession.Responses = newResponses
+	this.WriteSession(newSession)
+	return nil
+}
+
+func (this *SessionStorage) AppendToResponse(sessionId string, responseId string, text string) error {
+	return this.modifyToResponse(sessionId, responseId, func(r *data.Response) {
+		r.Text = r.Text + text
+	})
+}
+
+func (this *SessionStorage) SetResponseStatus(sessionId string, responseId string, status data.ResponseStatus) error {
+	return this.modifyToResponse(sessionId, responseId, func(r *data.Response) {
+		r.Status = status
+	})
 }

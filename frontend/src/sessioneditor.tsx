@@ -1,17 +1,21 @@
 import { ChangeEvent, useEffect, useState } from "react";
 import { Session } from "./data";
 import { navigate } from "raviger";
-import { loadSession, newResponse, setSessionPrompt, deleteResponse } from "./dataloading";
+import { loadSession, newResponse, setSessionPrompt, deleteResponse, SessionMonitor } from "./dataloading";
 import { ResponseEditor } from "./responseeditor";
 
 export interface Props {
   sessionId: string;
 }
 
+let sessionMonitor: SessionMonitor | null = null;
+
 export function SessionEditor({sessionId}: Props): JSX.Element {
   const [session, setSession] = useState<Session | null>(null);
+  const [sessionReload, setSessionReload] = useState<number>(0);
 
   const loadSessionData = async () => {
+    console.log(`loadSessionData()`);
     const loadedSession = await loadSession(sessionId);
     if (loadedSession == null) {
       navigate("/");
@@ -21,6 +25,24 @@ export function SessionEditor({sessionId}: Props): JSX.Element {
 
   useEffect(() => {
     loadSessionData();
+  }, [sessionId, sessionReload]);
+
+  useEffect(() => {
+    let sessionReloadCounter = sessionReload;
+    console.log(`Starting to monitor ${sessionId}`);
+    sessionMonitor = new SessionMonitor(sessionId, () => {
+      sessionReloadCounter++;
+      console.log(`Setting sessionReload to ${sessionReloadCounter}`);
+      setSessionReload(sessionReloadCounter);
+    });
+    sessionMonitor.start();
+    return () => {
+      if (sessionMonitor != null) {
+        console.log(`Stopping monitor of ${sessionId}`);
+        sessionMonitor.stop();
+        sessionMonitor = null;
+      }
+    };
   }, [sessionId]);
 
   const onPromptChange = (event: ChangeEvent<HTMLTextAreaElement>) => {

@@ -27,6 +27,8 @@ const (
 	messageType_WriteSession
 	messageType_NewResponse
 	messageType_DeleteResponse
+	messageType_AppendToResponse
+	messageType_SetResponseStatus
 )
 
 type message struct {
@@ -50,6 +52,18 @@ type newResponsePayload struct {
 type deleteResponsePayload struct {
 	sessionId  string
 	responseId string
+}
+
+type appendToResponsePayload struct {
+	sessionId  string
+	responseId string
+	text       string
+}
+
+type setResponseStatusPayload struct {
+	sessionId  string
+	responseId string
+	status     data.ResponseStatus
 }
 
 type response struct {
@@ -97,8 +111,21 @@ func worker(sessionStorage *SessionStorage, in chan *message) {
 			message.out <- &response{
 				err: &err,
 			}
-		}
 
+		case messageType_AppendToResponse:
+			payload := message.payload.(*appendToResponsePayload)
+			err := sessionStorage.AppendToResponse(payload.sessionId, payload.responseId, payload.text)
+			message.out <- &response{
+				err: &err,
+			}
+
+		case messageType_SetResponseStatus:
+			payload := message.payload.(*setResponseStatusPayload)
+			err := sessionStorage.SetResponseStatus(payload.sessionId, payload.responseId, payload.status)
+			message.out <- &response{
+				err: &err,
+			}
+		}
 	}
 }
 
@@ -166,6 +193,30 @@ func (this *ConcurrentSessionStorage) DeleteResponse(sessionId string, responseI
 		messageType: messageType_DeleteResponse,
 		out:         returnChannel,
 		payload:     &deleteResponsePayload{sessionId: sessionId, responseId: responseId},
+	}
+	response := <-returnChannel
+	close(returnChannel)
+	return *(response.err)
+}
+
+func (this *ConcurrentSessionStorage) AppendToResponse(sessionId string, responseId string, text string) error {
+	returnChannel := make(chan *response)
+	this.toWorker <- &message{
+		messageType: messageType_AppendToResponse,
+		out:         returnChannel,
+		payload:     &appendToResponsePayload{sessionId: sessionId, responseId: responseId, text: text},
+	}
+	response := <-returnChannel
+	close(returnChannel)
+	return *(response.err)
+}
+
+func (this *ConcurrentSessionStorage) SetResponseStatus(sessionId string, responseId string, status data.ResponseStatus) error {
+	returnChannel := make(chan *response)
+	this.toWorker <- &message{
+		messageType: messageType_SetResponseStatus,
+		out:         returnChannel,
+		payload:     &setResponseStatusPayload{sessionId: sessionId, responseId: responseId, status: status},
 	}
 	response := <-returnChannel
 	close(returnChannel)
