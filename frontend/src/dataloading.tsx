@@ -97,36 +97,92 @@ export async function deleteResponse(sessionId: string, responseId: string): Pro
   return response.ok;
 }
 
+
+export enum SessionMonitorState {
+  IDLE,
+  CONNECTING,
+  CONNECTED,
+  WAITING_TO_RECONNECT,
+}
+
+const DEFAULT_RECONNECT_DELAY_MS = 100;
+
 export class SessionMonitor {
   #sessionId = "";
   #socket: WebSocket | null = null;
-  #callback: ((message: string) => void)  | null = null;
+  #state = SessionMonitorState.IDLE;
+  #onChange: ((message: string) => void)  | null = null;
+  #onStateChange: ((statue: SessionMonitorState) => void)  | null = null;
+  #reconnectDelayMs = DEFAULT_RECONNECT_DELAY_MS;
 
-  constructor(sessionId: string, callback: (message: string) => void) {
+  constructor(sessionId: string, onChange: (message: string) => void,
+      onStateChange: (state: SessionMonitorState) => void) {
+console.log(`new SessionMonitor`);
     this.#sessionId = sessionId;
-    this.#callback = callback;
+    this.#onChange = onChange;
+    this.#onStateChange = onStateChange;
+  }
+
+  state(): SessionMonitorState {
+    return this.#state;
+  }
+
+  #setState(state: SessionMonitorState): void {
+    this.#state = state;
+    if (this.#onStateChange != null) {
+      console.log(`SessionMonitor ${state}`);
+      this.#onStateChange(state);
+    }
   }
 
   start(): void {
+    this.#connect();
+  }
+
+  #connect(): void {
+    console.log(`Connecting`);
+    this.#setState(SessionMonitorState.CONNECTING);
     this.#socket = new WebSocket(`${WEBSOCKET_SERVER_BASE_URL}/session/${this.#sessionId}/changes`)
     this.#socket.addEventListener("message", (event) => {
       console.log(`Received Message: ${event.data}`);
-      if (this.#callback != null) {
-        this.#callback(event.data);
+      if (this.#onChange != null) {
+        this.#onChange(event.data);
       }
     });
     this.#socket.addEventListener("open", () => {
       console.log(`Websocket open for sessionId ${this.#sessionId}`);
+      this.#setState(SessionMonitorState.CONNECTED);
+      this.#reconnectDelayMs = DEFAULT_RECONNECT_DELAY_MS;
     });
     this.#socket.addEventListener("close", () => {
       console.log(`Websocket closed for sessionId ${this.#sessionId}`);
+      if (this.#state === SessionMonitorState.IDLE) {
+        return;
+      }
+      this.#reconnect();
     });
     this.#socket.addEventListener("error", (e) => {
       console.log(`Websocket error for sessionId ${this.#sessionId}`, e);
+      if (this.#socket !== null) {
+        this.#socket.close();
+      }
     });
   }
 
+  #reconnect(): void {
+    this.#setState(SessionMonitorState.WAITING_TO_RECONNECT);
+    console.log(`Reconnecting ${this.#reconnectDelayMs}ms`);
+    setTimeout(() => {
+      if (this.#state === SessionMonitorState.IDLE) {
+        return;
+      }
+      this.#connect();
+    }, this.#reconnectDelayMs);
+    this.#reconnectDelayMs = Math.min(this.#reconnectDelayMs * 2, 5000);
+  }
+
   stop(): void {
+    this.#state = SessionMonitorState.IDLE;
     if (this.#socket == null) {
       return;
     }

@@ -331,6 +331,9 @@ $hr-border-color:             $base-border-color !default;
 $panel-body-padding:          pxToRem(15px) !default;
 $padding-xs-horizontal:       pxToRem(5px) !default;
 
+$inset-panel-background-color:     lighten($level-2-color, 4%) !default;
+$component-border-radius: pxToRem(3px) !default;
+
 $background-alpha: 1;
 
 $root-background-color: $terminal-background-color;

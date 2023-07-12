@@ -75,7 +75,9 @@ var upgrader = websocket.Upgrader{
 const (
 	// Time allowed to write a message to the websocket.
 	websocketWriteWait  = 10 * time.Second
+	websocketPongWait   = 5 * time.Second
 	changeThrottleDelay = 500 * time.Millisecond
+	websocketPingPeriod = (websocketPongWait * 9) / 10
 )
 
 func handleSessionChangesGet(c *gin.Context) {
@@ -93,24 +95,26 @@ func handleSessionChangesGet(c *gin.Context) {
 
 	changeChan := make(chan string, 16)
 	sessionBroadcaster.Register(sessionId, changeChan)
+	pingTicker := time.NewTicker(websocketPingPeriod)
 	defer func() {
 		sessionBroadcaster.Unregister(changeChan)
+		pingTicker.Stop()
 		close(changeChan)
 	}()
+
+	go websocketReader(wsSession)
 
 	throttleTimer := time.NewTimer(changeThrottleDelay)
 	isChangeWaiting := false
 	for {
 		select {
 		case <-changeChan:
-			log.Printf("Received changed message on session ID  %s.", sessionId)
 			isChangeWaiting = true
 
 		case <-throttleTimer.C:
 			if isChangeWaiting {
 				isChangeWaiting = false
 				wsSession.SetWriteDeadline(time.Now().Add(websocketWriteWait))
-				log.Printf("Sending message 'changed' to session ID  %s.", sessionId)
 
 				if err := wsSession.WriteMessage(websocket.TextMessage, []byte("changed")); err != nil {
 					wsSession.Close()
@@ -123,6 +127,29 @@ func handleSessionChangesGet(c *gin.Context) {
 				}
 			}
 			throttleTimer.Reset(changeThrottleDelay)
+
+		case <-pingTicker.C:
+			wsSession.SetWriteDeadline(time.Now().Add(websocketWriteWait))
+			if err := wsSession.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+				log.Printf("Client disconnected for session ID %s.", sessionId)
+				return
+			}
+		}
+	}
+}
+
+func websocketReader(ws *websocket.Conn) {
+	defer ws.Close()
+	ws.SetReadLimit(512)
+	ws.SetReadDeadline(time.Now().Add(websocketPongWait))
+	ws.SetPongHandler(func(string) error {
+		ws.SetReadDeadline(time.Now().Add(websocketPongWait))
+		return nil
+	})
+	for {
+		_, _, err := ws.ReadMessage()
+		if err != nil {
+			break
 		}
 	}
 }
@@ -196,11 +223,15 @@ func handleResponsePost(c *gin.Context) {
 	}
 
 	completeFunc := func() {
-		sessionStorage.SetResponseStatus(sessionId, responseId, data.ResponseStatus_Done)
 		sessionBroadcaster.Send(sessionId, "changed")
 	}
 
-	llmEngine.Enqueue(response.Prompt, appendFunc, completeFunc)
+	setStatusFunc := func(status data.ResponseStatus) {
+		sessionStorage.SetResponseStatus(sessionId, responseId, status)
+		sessionBroadcaster.Send(sessionId, "changed")
+	}
+
+	llmEngine.Enqueue(response.Prompt, appendFunc, completeFunc, setStatusFunc)
 	c.JSON(http.StatusOK, response)
 }
 

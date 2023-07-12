@@ -21,7 +21,7 @@ export interface Session {
   responses: Response[];
 }
 
-export type ResponseStatus = "done" | "pending" | "running";
+export type ResponseStatus = "done" | "pending" | "running" | "error";
 
 export interface Response {
   id: string;

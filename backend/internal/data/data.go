@@ -35,6 +35,7 @@ const (
 	ResponseStatus_Done ResponseStatus = iota + 1
 	ResponseStatus_Pending
 	ResponseStatus_Running
+	ResponseStatus_Error
 )
 
 func (status ResponseStatus) String() string {
@@ -45,6 +46,8 @@ func (status ResponseStatus) String() string {
 		return "done"
 	case ResponseStatus_Running:
 		return "running"
+	case ResponseStatus_Error:
+		return "error"
 	default:
 	}
 	panic("Unknown ResponseStatus enum value.")
@@ -75,6 +78,8 @@ func ParseResponseStatus(statusString string) (ResponseStatus, error) {
 		return ResponseStatus_Pending, nil
 	case "running":
 		return ResponseStatus_Running, nil
+	case "error":
+		return ResponseStatus_Error, nil
 	default:
 		return ResponseStatus_Done, fmt.Errorf("%q is not a valid ResponseStatus value", statusString)
 	}

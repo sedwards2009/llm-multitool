@@ -14,19 +14,19 @@
   border-radius: $badge-border-radius;
 
   &.success {
-    background-color: $brand-success;
+    background-color: $background-success-color;
   }
 
   &.info {
-    background-color: $brand-info;
+    background-color: $background-info-color;
   }
 
   &.warning {
-    background-color: $brand-warning;
+    background-color: $background-warning-color;
   }
 
   &.danger {
-    background-color: $brand-danger;
+    background-color: $background-danger-color;
   }
 
 }

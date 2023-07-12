@@ -57,6 +57,24 @@ p.minor, span.minor {
   color: $text-minor-color;
 }
 
+pre {
+  box-shadow: none;
+
+  color: $text-highlight-color;
+  background: $background-highlight-color;
+  padding: $panel-body-padding;
+
+  border-radius: $component-border-radius;
+  border: none;
+  margin: 0;
+  overflow-x: auto;
+}
+
+code {
+  color: $text-highlight-color;
+  border-radius: $component-border-radius;
+}
+
 .highlight-success, .highlight-info, .highlight-warning, .highlight-error, .highlight-danger {
   color: $text-highlight-color;
   font-weight: bold;

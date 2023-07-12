@@ -1,6 +1,9 @@
 package engine
 
-import "log"
+import (
+	"log"
+	"sedwards2009/llm-workbench/internal/data"
+)
 
 type Engine struct {
 	toWorkerChan      chan *message
@@ -22,9 +25,10 @@ type message struct {
 }
 
 type enqueueWorkPayload struct {
-	prompt       string
-	appendFunc   func(string)
-	completeFunc func()
+	prompt        string
+	appendFunc    func(string)
+	completeFunc  func()
+	setStatusFunc func(status data.ResponseStatus)
 }
 
 func NewEngine() *Engine {
@@ -80,11 +84,14 @@ func (this *Engine) computeWorker(in chan *enqueueWorkPayload, done chan bool) {
 	}
 }
 
-func (this *Engine) Enqueue(prompt string, appendFunc func(string), completeFunc func()) {
+func (this *Engine) Enqueue(prompt string, appendFunc func(string), completeFunc func(),
+	setStatusFunc func(data.ResponseStatus)) {
+
 	payload := &enqueueWorkPayload{
-		prompt:       prompt,
-		appendFunc:   appendFunc,
-		completeFunc: completeFunc,
+		prompt:        prompt,
+		appendFunc:    appendFunc,
+		completeFunc:  completeFunc,
+		setStatusFunc: setStatusFunc,
 	}
 	message := &message{
 		messageType: messageType_Enqueue,

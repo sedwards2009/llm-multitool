@@ -2,18 +2,18 @@ import { ChangeEvent, KeyboardEventHandler, useEffect, useState } from "react";
 import { Session } from "./data";
 import { navigate } from "raviger";
 import TextareaAutosize from "react-textarea-autosize";
-import { loadSession, newResponse, setSessionPrompt, deleteResponse, SessionMonitor } from "./dataloading";
+import { loadSession, newResponse, setSessionPrompt, deleteResponse, SessionMonitor, SessionMonitorState } from "./dataloading";
 import { ResponseEditor } from "./responseeditor";
 
 export interface Props {
   sessionId: string;
 }
 
-let sessionMonitor: SessionMonitor | null = null;
-
 export function SessionEditor({sessionId}: Props): JSX.Element {
   const [session, setSession] = useState<Session | null>(null);
   const [sessionReload, setSessionReload] = useState<number>(0);
+  const [sessionMonitor, setSessionMonitor] = useState<SessionMonitor | null>(null);
+  const [sessionMonitorState, setSessionMonitorState] = useState<SessionMonitorState>(SessionMonitorState.IDLE);
 
   const loadSessionData = async () => {
     console.log(`loadSessionData()`);
@@ -31,17 +31,25 @@ export function SessionEditor({sessionId}: Props): JSX.Element {
   useEffect(() => {
     let sessionReloadCounter = sessionReload;
     console.log(`Starting to monitor ${sessionId}`);
-    sessionMonitor = new SessionMonitor(sessionId, () => {
+
+    const onChange = () => {
       sessionReloadCounter++;
       console.log(`Setting sessionReload to ${sessionReloadCounter}`);
       setSessionReload(sessionReloadCounter);
-    });
-    sessionMonitor.start();
+    };
+
+    const onStateChange = (state: SessionMonitorState) => {
+      setSessionMonitorState(state);
+    };
+
+    const newSessionMonitor = new SessionMonitor(sessionId, onChange, onStateChange);
+    setSessionMonitor(newSessionMonitor);
+    newSessionMonitor.start();
     return () => {
-      if (sessionMonitor != null) {
+      if (newSessionMonitor != null) {
         console.log(`Stopping monitor of ${sessionId}`);
-        sessionMonitor.stop();
-        sessionMonitor = null;
+        newSessionMonitor.stop();
+        setSessionMonitor(null);
       }
     };
   }, [sessionId]);
@@ -74,8 +82,17 @@ export function SessionEditor({sessionId}: Props): JSX.Element {
   return <div className="session-editor">
     {session == null && <div>Loading</div>}
     {session && <>
-        <div className="session-prompt-pane">
+        <div className="session-prompt-pane card">
           <h3>Prompt</h3>
+          <div className="controls">
+            {sessionMonitorState !== SessionMonitorState.CONNECTED &&
+              <span className="badge warning">
+                <i className="fa fa-plug"></i>
+                {" " + SessionMonitorStateToString(sessionMonitorState)}
+              </span>
+            }
+          </div>
+
           <TextareaAutosize
             className="char-width-20"
             value={session.prompt}
@@ -85,7 +102,6 @@ export function SessionEditor({sessionId}: Props): JSX.Element {
           <button className="success" title="Shift+Enter" onClick={onSubmitClicked}>Submit</button>
         </div>
         <div className="session-response-pane">
-          <h3>Responses</h3>
           {
             session.responses.map(r => <ResponseEditor response={r} key={r.id} onDeleteClicked={onDeleteClicked} />)
           }
@@ -94,3 +110,13 @@ export function SessionEditor({sessionId}: Props): JSX.Element {
     }
   </div>;
 }
+
+function SessionMonitorStateToString(state: SessionMonitorState): string {
+  return {
+    [SessionMonitorState.IDLE]: "Idle",
+    [SessionMonitorState.CONNECTING]: "Connecting",
+    [SessionMonitorState.CONNECTED]: "Connected",
+    [SessionMonitorState.WAITING_TO_RECONNECT]: "Waiting to reconnect",
+  }[state];
+}
+
