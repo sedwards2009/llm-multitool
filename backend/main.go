@@ -57,7 +57,8 @@ func setupRouter() *gin.Engine {
 	r.POST("/session/:sessionId/response", handleResponsePost)
 	r.GET("/session/:sessionId/changes", handleSessionChangesGet)
 	r.DELETE("/session/:sessionId/response/:responseId", handleResponseDelete)
-
+	r.GET("/model", handleModelOverviewGet)
+	r.PUT("/session/:sessionId/modelSettings", handleSessionModelSettingsPut)
 	return r
 }
 
@@ -188,7 +189,7 @@ func handleSessionPromptPut(c *gin.Context) {
 	}
 
 	var data struct {
-		Prompt string `json:"prompt"`
+		Value string `json:"value"`
 	}
 
 	if err := c.ShouldBindJSON(&data); err != nil {
@@ -196,7 +197,7 @@ func handleSessionPromptPut(c *gin.Context) {
 		return
 	}
 
-	session.Prompt = data.Prompt
+	session.Prompt = data.Value
 	sessionStorage.WriteSession(session)
 
 	c.JSON(http.StatusOK, session)
@@ -246,6 +247,36 @@ func handleResponseDelete(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+func handleModelOverviewGet(c *gin.Context) {
+	modelOverview := llmEngine.ModelOverview()
+	c.JSON(http.StatusOK, modelOverview)
+}
+
+func handleSessionModelSettingsPut(c *gin.Context) {
+	sessionId := c.Params.ByName("sessionId")
+	session := sessionStorage.ReadSession(sessionId)
+	if session == nil {
+		c.String(http.StatusNotFound, "Session not found")
+		return
+	}
+
+	data := &data.ModelSettings{}
+	if err := c.ShouldBindJSON(&data); err != nil {
+		c.String(http.StatusBadRequest, "Couldn't parse the JSON PUT body.")
+		return
+	}
+
+	if !llmEngine.ValidateModelSettings(data) {
+		c.String(http.StatusBadRequest, "An invalid ModelSettings struct was ModelID was given in the PUT body.")
+		return
+	}
+
+	session.ModelSettings = data
+	sessionStorage.WriteSession(session)
+
+	c.JSON(http.StatusOK, session)
 }
 
 func main() {

@@ -1,19 +1,22 @@
 import { ChangeEvent, KeyboardEventHandler, useEffect, useState } from "react";
-import { Session } from "./data";
+import { ModelOverview, Session } from "./data";
 import { navigate } from "raviger";
 import TextareaAutosize from "react-textarea-autosize";
-import { loadSession, newResponse, setSessionPrompt, deleteResponse, SessionMonitor, SessionMonitorState } from "./dataloading";
+import { loadSession, newResponse, setSessionPrompt, deleteResponse, SessionMonitor, SessionMonitorState, setSessionModel } from "./dataloading";
 import { ResponseEditor } from "./responseeditor";
+import { ModelSettings } from "./modelsettings";
 
 export interface Props {
   sessionId: string;
+  modelOverview: ModelOverview;
 }
 
-export function SessionEditor({sessionId}: Props): JSX.Element {
+export function SessionEditor({sessionId, modelOverview}: Props): JSX.Element {
   const [session, setSession] = useState<Session | null>(null);
   const [sessionReload, setSessionReload] = useState<number>(0);
   const [sessionMonitor, setSessionMonitor] = useState<SessionMonitor | null>(null);
   const [sessionMonitorState, setSessionMonitorState] = useState<SessionMonitorState>(SessionMonitorState.IDLE);
+  const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
 
   const loadSessionData = async () => {
     console.log(`loadSessionData()`);
@@ -22,6 +25,9 @@ export function SessionEditor({sessionId}: Props): JSX.Element {
       navigate("/");
     }
     setSession(loadedSession);
+    if (loadedSession != null) {
+      setSelectedModelId(loadedSession?.modelSettings.modelId);
+    }
   };
 
   useEffect(() => {
@@ -58,6 +64,11 @@ export function SessionEditor({sessionId}: Props): JSX.Element {
     setSession(setSessionPrompt(session as Session, event.target.value));
   }
 
+  const onModelChange = (modelId: string) => {
+    setSelectedModelId(modelId);
+    setSession(setSessionModel(session as Session, modelId));
+  };
+
   const onDeleteClicked = (responseId: string) => {
     (async () => {
       await deleteResponse((session as Session).id, responseId);
@@ -83,6 +94,11 @@ export function SessionEditor({sessionId}: Props): JSX.Element {
     {session == null && <div>Loading</div>}
     {session && <>
         <div className="session-prompt-pane card">
+          <ModelSettings
+            modelOverview={modelOverview}
+            selectedModelId={selectedModelId}
+            setSelectedModelId={onModelChange}
+          />
           <h3>Prompt</h3>
           <div className="controls">
             {sessionMonitorState !== SessionMonitorState.CONNECTED &&

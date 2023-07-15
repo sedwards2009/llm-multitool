@@ -1,5 +1,5 @@
 import * as _ from "lodash";
-import { Session, SessionOverview } from "./data";
+import { ModelOverview, ModelSettings, Session, SessionOverview } from "./data";
 
 export interface LoaderResult {
   sessionOverview: SessionOverview;
@@ -8,6 +8,18 @@ export interface LoaderResult {
 
 const SERVER_BASE_URL = "http://localhost:8080";
 const WEBSOCKET_SERVER_BASE_URL = "ws://localhost:8080";
+
+export async function loadModelOverview(): Promise<ModelOverview> {
+  const response = await fetch(`${SERVER_BASE_URL}/model`);
+  try {
+    return await response.json();
+  } catch (error) {
+    console.error("Could not parse JSON", error);
+    return {
+      models: []
+    };
+  }
+}
 
 export async function loadSessionOverview(): Promise<SessionOverview> {
   const response = await fetch(`${SERVER_BASE_URL}/session`);
@@ -45,6 +57,17 @@ export async function newSession(): Promise<Session | null> {
   return null;
 }
 
+async function putSessionProperty(sessionId: string, propertyName: string, value: any): Promise<void> {
+  await fetch(`${SERVER_BASE_URL}/session/${sessionId}/${propertyName}`,
+    {
+      method: "PUT",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(value)
+    });
+}
+
+// This is all about throttling the REST calls done to update the prompt on the
+// server when the user is typing a prompt. We don't need to write every keypress.
 let saveSessionPromptQueue = new Map<string, string>();
 
 export function setSessionPrompt(session: Session, prompt: string): Session {
@@ -57,12 +80,7 @@ async function processSessionPromptQueue(): Promise<void> {
   const workingSessionPromptQueue = saveSessionPromptQueue;
   saveSessionPromptQueue = new Map<string, string>();
   for (const [sessionId, prompt] of workingSessionPromptQueue.entries()) {
-    await fetch(`${SERVER_BASE_URL}/session/${sessionId}/prompt`,
-      {
-        method: "PUT",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({prompt})
-    });
+    await putSessionProperty(sessionId, "prompt", {value: prompt});
   }
 }
 
@@ -74,6 +92,12 @@ const flushSessionPromptQueue = _.throttle(() => {
 
 async function flushQueues(): Promise<void> {
   await processSessionPromptQueue();
+}
+
+export function setSessionModel(session: Session, modelId: string): Session {
+  const newModelSettings: ModelSettings = {...session.modelSettings, modelId };
+  putSessionProperty(session.id, "modelSettings", newModelSettings);
+  return {...session, modelSettings: newModelSettings};
 }
 
 export async function newResponse(session: Session): Promise<Response | null> {
@@ -117,7 +141,6 @@ export class SessionMonitor {
 
   constructor(sessionId: string, onChange: (message: string) => void,
       onStateChange: (state: SessionMonitorState) => void) {
-console.log(`new SessionMonitor`);
     this.#sessionId = sessionId;
     this.#onChange = onChange;
     this.#onStateChange = onStateChange;
@@ -144,18 +167,15 @@ console.log(`new SessionMonitor`);
     this.#setState(SessionMonitorState.CONNECTING);
     this.#socket = new WebSocket(`${WEBSOCKET_SERVER_BASE_URL}/session/${this.#sessionId}/changes`)
     this.#socket.addEventListener("message", (event) => {
-      console.log(`Received Message: ${event.data}`);
       if (this.#onChange != null) {
         this.#onChange(event.data);
       }
     });
     this.#socket.addEventListener("open", () => {
-      console.log(`Websocket open for sessionId ${this.#sessionId}`);
       this.#setState(SessionMonitorState.CONNECTED);
       this.#reconnectDelayMs = DEFAULT_RECONNECT_DELAY_MS;
     });
     this.#socket.addEventListener("close", () => {
-      console.log(`Websocket closed for sessionId ${this.#sessionId}`);
       if (this.#state === SessionMonitorState.IDLE) {
         return;
       }

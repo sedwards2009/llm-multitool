@@ -19,6 +19,11 @@ export interface Session {
   title: string;
   prompt: string;
   responses: Response[];
+  modelSettings: ModelSettings;
+}
+
+export interface ModelSettings {
+  modelId: string;
 }
 
 export type ResponseStatus = "done" | "pending" | "running" | "error";
@@ -29,4 +34,13 @@ export interface Response {
   status: ResponseStatus;
   prompt: string;
   text: string;
+}
+
+export interface Model {
+	id: string;
+  name: string;
+}
+
+export interface ModelOverview {
+	models: Model[];
 }

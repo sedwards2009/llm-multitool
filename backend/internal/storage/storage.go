@@ -73,6 +73,10 @@ func (this *SessionStorage) readSession(filePath string) *data.Session {
 		log.Println("Error unmarshalling JSON", err)
 		return nil
 	}
+
+	if session.ModelSettings == nil {
+		session.ModelSettings = &data.ModelSettings{}
+	}
 	return &session
 }
 

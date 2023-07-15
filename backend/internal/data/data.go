@@ -21,11 +21,26 @@ type Root struct {
 }
 
 type Session struct {
-	ID                string      `json:"id"`
-	CreationTimestamp string      `json:"creationTimestamp"`
-	Title             string      `json:"title"`
-	Prompt            string      `json:"prompt"`
-	Responses         []*Response `json:"responses"`
+	ID                string         `json:"id"`
+	CreationTimestamp string         `json:"creationTimestamp"`
+	Title             string         `json:"title"`
+	Prompt            string         `json:"prompt"`
+	Responses         []*Response    `json:"responses"`
+	ModelSettings     *ModelSettings `json:"modelSettings"`
+}
+
+type ModelSettings struct {
+	ModelID string `json:"modelId"`
+}
+
+type ModelOverview struct {
+	Models []*Model `json:"models"`
+}
+
+type Model struct {
+	ID              string `json:"id"`
+	Name            string `json:"name"`
+	InternalModelID string
 }
 
 // -------------------------------------------------------------------------

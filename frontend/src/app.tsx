@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
-import { SessionOverview } from "./data";
-import { loadSessionOverview } from "./dataloading";
+import { ModelOverview, SessionOverview } from "./data";
+import { loadModelOverview, loadSessionOverview } from "./dataloading";
 import { MainApp } from "./mainapp";
 
 export function App() {
   const [sessionOverview, setSessionOverview] = useState<SessionOverview | null>(null);
+  const [modelOverview, setModelOverview] = useState<ModelOverview | null>(null);
+
+  const loadModelOverviewData = async () => {
+    const overview = await loadModelOverview();
+    console.log(`Loaded the model overview`);
+    setModelOverview(overview);
+  };
 
   const onSessionChange = () => {
     (async () => {
@@ -13,15 +20,17 @@ export function App() {
       setSessionOverview(loadedSessionOverview);
     })();
   };
+
   useEffect(() => {
+    loadModelOverviewData();
     if (sessionOverview == null) {
       onSessionChange();
     }
-  });
+  }, []);
 
-  if (sessionOverview == null) {
+  if (sessionOverview == null || modelOverview == null) {
     return <div>Loading...</div>;
   }
 
-  return <MainApp sessionOverview={sessionOverview} onSessionChange={onSessionChange} />;
+  return <MainApp modelOverview={modelOverview} sessionOverview={sessionOverview} onSessionChange={onSessionChange} />;
 }
