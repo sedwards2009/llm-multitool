@@ -1,4 +1,4 @@
-package engine
+package openai
 
 import (
 	"context"
@@ -7,15 +7,16 @@ import (
 	"log"
 	"os"
 	"sedwards2009/llm-workbench/internal/data"
+	"sedwards2009/llm-workbench/internal/engine/request"
 
 	openai "github.com/sashabaranov/go-openai"
 )
 
 const ENGINE_NAME = "openai"
 
-func processOpenAI(work *enqueueWorkPayload) {
+func Process(work *request.Request) {
 	log.Printf("processOpenAI(): Starting request")
-	work.setStatusFunc(data.ResponseStatus_Running)
+	work.SetStatusFunc(data.ResponseStatus_Running)
 
 	c := openai.NewClient(os.Getenv("OPENAI_TOKEN"))
 	ctx := context.Background()
@@ -26,7 +27,7 @@ func processOpenAI(work *enqueueWorkPayload) {
 		Messages: []openai.ChatCompletionMessage{
 			{
 				Role:    openai.ChatMessageRoleUser,
-				Content: work.prompt,
+				Content: work.Prompt,
 			},
 		},
 		Stream: true,
@@ -34,7 +35,7 @@ func processOpenAI(work *enqueueWorkPayload) {
 	stream, err := c.CreateChatCompletionStream(ctx, req)
 	if err != nil {
 		log.Printf("processOpenAI(): ChatCompletionStream error: %v\n", err)
-		work.completeFunc()
+		work.CompleteFunc()
 		return
 	}
 	defer stream.Close()
@@ -47,17 +48,17 @@ func processOpenAI(work *enqueueWorkPayload) {
 
 		if err != nil {
 			log.Printf("processOpenAI(): ChatCompletionStream error: %v\n", err)
-			work.setStatusFunc(data.ResponseStatus_Error)
+			work.SetStatusFunc(data.ResponseStatus_Error)
 			break
 		}
-		work.appendFunc(response.Choices[0].Delta.Content)
+		work.AppendFunc(response.Choices[0].Delta.Content)
 	}
-	work.setStatusFunc(data.ResponseStatus_Done)
+	work.SetStatusFunc(data.ResponseStatus_Done)
 	log.Printf("processOpenAI(): ChatCompletionStream completed")
-	work.completeFunc()
+	work.CompleteFunc()
 }
 
-func scanModelsOpenAI() []*data.Model {
+func ScanModels() []*data.Model {
 	return []*data.Model{
 		{
 			ID:              "openai.com_chatgpt3.5turbo",

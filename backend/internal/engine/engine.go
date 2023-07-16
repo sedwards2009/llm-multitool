@@ -3,14 +3,17 @@ package engine
 import (
 	"log"
 	"sedwards2009/llm-workbench/internal/data"
+	"sedwards2009/llm-workbench/internal/engine/oobabooga"
+	"sedwards2009/llm-workbench/internal/engine/openai"
+	"sedwards2009/llm-workbench/internal/engine/request"
 )
 
 type Engine struct {
 	toWorkerChan      chan *message
-	workQueue         []*enqueueWorkPayload
+	workQueue         []*request.Request
 	engineDoneChan    chan bool
 	isComputing       bool
-	computeWorkerChan chan *enqueueWorkPayload
+	computeWorkerChan chan *request.Request
 	models            []*data.Model
 }
 
@@ -26,13 +29,6 @@ type message struct {
 	payload     any
 }
 
-type enqueueWorkPayload struct {
-	prompt        string
-	appendFunc    func(string)
-	completeFunc  func()
-	setStatusFunc func(status data.ResponseStatus)
-}
-
 type listModelsPayload struct {
 	out chan *data.ModelOverview
 }
@@ -40,10 +36,10 @@ type listModelsPayload struct {
 func NewEngine() *Engine {
 	engine := &Engine{
 		toWorkerChan:      make(chan *message, 16),
-		workQueue:         make([]*enqueueWorkPayload, 0),
+		workQueue:         make([]*request.Request, 0),
 		engineDoneChan:    make(chan bool, 16),
 		isComputing:       false,
-		computeWorkerChan: make(chan *enqueueWorkPayload, 2),
+		computeWorkerChan: make(chan *request.Request, 2),
 		models:            make([]*data.Model, 0),
 	}
 	go engine.worker(engine.toWorkerChan)
@@ -62,7 +58,7 @@ func (this *Engine) worker(in chan *message) {
 		case message := <-in:
 			switch message.messageType {
 			case messageType_Enqueue:
-				payload := message.payload.(*enqueueWorkPayload)
+				payload := message.payload.(*request.Request)
 				log.Printf("engine worker: enqueue %p", payload)
 				this.workQueue = append(this.workQueue, payload)
 				this.tryNextCompute()
@@ -93,16 +89,17 @@ func (this *Engine) tryNextCompute() {
 	this.isComputing = true
 }
 
-func (this *Engine) computeWorker(in chan *enqueueWorkPayload, done chan bool) {
+func (this *Engine) computeWorker(in chan *request.Request, done chan bool) {
 	for work := range in {
-		processOpenAI(work)
+		openai.Process(work)
 		done <- true
 	}
 }
 
 func (this *Engine) scanModels() {
 	allModels := []*data.Model{}
-	allModels = append(allModels, scanModelsOpenAI()...)
+	allModels = append(allModels, openai.ScanModels()...)
+	allModels = append(allModels, oobabooga.ScanModels()...)
 
 	this.models = allModels
 }
@@ -110,11 +107,11 @@ func (this *Engine) scanModels() {
 func (this *Engine) Enqueue(prompt string, appendFunc func(string), completeFunc func(),
 	setStatusFunc func(data.ResponseStatus)) {
 
-	payload := &enqueueWorkPayload{
-		prompt:        prompt,
-		appendFunc:    appendFunc,
-		completeFunc:  completeFunc,
-		setStatusFunc: setStatusFunc,
+	payload := &request.Request{
+		Prompt:        prompt,
+		AppendFunc:    appendFunc,
+		CompleteFunc:  completeFunc,
+		SetStatusFunc: setStatusFunc,
 	}
 	message := &message{
 		messageType: messageType_Enqueue,
