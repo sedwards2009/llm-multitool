@@ -11,6 +11,8 @@ import (
 	openai "github.com/sashabaranov/go-openai"
 )
 
+const ENGINE_NAME = "openai"
+
 func processOpenAI(work *enqueueWorkPayload) {
 	log.Printf("processOpenAI(): Starting request")
 	work.setStatusFunc(data.ResponseStatus_Running)
@@ -53,4 +55,21 @@ func processOpenAI(work *enqueueWorkPayload) {
 	work.setStatusFunc(data.ResponseStatus_Done)
 	log.Printf("processOpenAI(): ChatCompletionStream completed")
 	work.completeFunc()
+}
+
+func scanModelsOpenAI() []*data.Model {
+	return []*data.Model{
+		{
+			ID:              "openai.com_chatgpt3.5turbo",
+			Name:            "OpenAI - ChatGPT 3.5 Turbo",
+			Engine:          ENGINE_NAME,
+			InternalModelID: openai.GPT3Dot5Turbo,
+		},
+		{
+			ID:              "openai.com_gpt4",
+			Name:            "OpenAI - GPT 4",
+			Engine:          ENGINE_NAME,
+			InternalModelID: openai.GPT4,
+		},
+	}
 }

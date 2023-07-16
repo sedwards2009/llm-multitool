@@ -3,8 +3,6 @@ package engine
 import (
 	"log"
 	"sedwards2009/llm-workbench/internal/data"
-
-	openai "github.com/sashabaranov/go-openai"
 )
 
 type Engine struct {
@@ -103,18 +101,10 @@ func (this *Engine) computeWorker(in chan *enqueueWorkPayload, done chan bool) {
 }
 
 func (this *Engine) scanModels() {
-	this.models = []*data.Model{
-		{
-			ID:              "openai.com_chatgpt3.5turbo",
-			Name:            "OpenAI - ChatGPT 3.5 Turbo",
-			InternalModelID: openai.GPT3Dot5Turbo,
-		},
-		{
-			ID:              "openai.com_gpt4",
-			Name:            "OpenAI - GPT 4",
-			InternalModelID: openai.GPT4,
-		},
-	}
+	allModels := []*data.Model{}
+	allModels = append(allModels, scanModelsOpenAI()...)
+
+	this.models = allModels
 }
 
 func (this *Engine) Enqueue(prompt string, appendFunc func(string), completeFunc func(),

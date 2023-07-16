@@ -40,6 +40,7 @@ type ModelOverview struct {
 type Model struct {
 	ID              string `json:"id"`
 	Name            string `json:"name"`
+	Engine          string
 	InternalModelID string
 }
 
