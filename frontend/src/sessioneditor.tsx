@@ -19,7 +19,6 @@ export function SessionEditor({sessionId, modelOverview}: Props): JSX.Element {
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
 
   const loadSessionData = async () => {
-    console.log(`loadSessionData()`);
     const loadedSession = await loadSession(sessionId);
     if (loadedSession == null) {
       navigate("/");
@@ -40,7 +39,6 @@ export function SessionEditor({sessionId, modelOverview}: Props): JSX.Element {
 
     const onChange = () => {
       sessionReloadCounter++;
-      console.log(`Setting sessionReload to ${sessionReloadCounter}`);
       setSessionReload(sessionReloadCounter);
     };
 
@@ -110,7 +108,7 @@ export function SessionEditor({sessionId, modelOverview}: Props): JSX.Element {
           </div>
 
           <TextareaAutosize
-            className="char-width-20"
+            className="char-width-30"
             value={session.prompt}
             onChange={onPromptChange}
             onKeyDown={onKeyDown}
