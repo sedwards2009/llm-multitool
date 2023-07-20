@@ -232,7 +232,7 @@ func handleResponsePost(c *gin.Context) {
 		sessionBroadcaster.Send(sessionId, "changed")
 	}
 
-	llmEngine.Enqueue(response.Prompt, appendFunc, completeFunc, setStatusFunc)
+	llmEngine.Enqueue(response.Prompt, appendFunc, completeFunc, setStatusFunc, session.ModelSettings)
 	c.JSON(http.StatusOK, response)
 }
 

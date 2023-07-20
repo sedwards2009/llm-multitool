@@ -55,6 +55,7 @@ func (this *SessionStorage) NewSession() *data.Session {
 		Title:             "(new session)",
 		CreationTimestamp: now.Format(time.RFC3339),
 		Responses:         []*data.Response{},
+		ModelSettings:     &data.ModelSettings{},
 	}
 	this.WriteSession(session)
 	return session
@@ -136,6 +137,7 @@ func copySession(srcSession *data.Session) *data.Session {
 		Title:             srcSession.Title,
 		Prompt:            srcSession.Prompt,
 		Responses:         srcSession.Responses,
+		ModelSettings:     srcSession.ModelSettings,
 	}
 	return copy
 }

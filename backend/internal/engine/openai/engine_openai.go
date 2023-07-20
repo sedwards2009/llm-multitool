@@ -7,14 +7,22 @@ import (
 	"log"
 	"os"
 	"sedwards2009/llm-workbench/internal/data"
-	"sedwards2009/llm-workbench/internal/engine/request"
+	"sedwards2009/llm-workbench/internal/engine/types"
 
 	openai "github.com/sashabaranov/go-openai"
 )
 
 const ENGINE_NAME = "openai"
 
-func Process(work *request.Request) {
+func NewEngineBackend() types.EngineBackend {
+	return types.EngineBackend{
+		ID:         ENGINE_NAME,
+		ScanModels: scanModels,
+		Process:    process,
+	}
+}
+
+func process(work *types.Request, model *data.Model) {
 	log.Printf("processOpenAI(): Starting request")
 	work.SetStatusFunc(data.ResponseStatus_Running)
 
@@ -22,7 +30,7 @@ func Process(work *request.Request) {
 	ctx := context.Background()
 
 	req := openai.ChatCompletionRequest{
-		Model:     openai.GPT3Dot5Turbo,
+		Model:     model.InternalModelID,
 		MaxTokens: 200,
 		Messages: []openai.ChatCompletionMessage{
 			{
@@ -58,7 +66,7 @@ func Process(work *request.Request) {
 	work.CompleteFunc()
 }
 
-func ScanModels() []*data.Model {
+func scanModels() []*data.Model {
 	return []*data.Model{
 		{
 			ID:              "openai.com_chatgpt3.5turbo",

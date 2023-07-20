@@ -6,22 +6,30 @@ import (
 	"io"
 	"log"
 	"sedwards2009/llm-workbench/internal/data"
-	"sedwards2009/llm-workbench/internal/engine/request"
+	"sedwards2009/llm-workbench/internal/engine/types"
 
 	"github.com/sashabaranov/go-openai"
 )
 
 const ENGINE_NAME = "oobabooga"
 
-func Process(work *request.Request) {
+func NewEngineBackend() types.EngineBackend {
+	return types.EngineBackend{
+		ID:         ENGINE_NAME,
+		ScanModels: scanModels,
+		Process:    process,
+	}
+}
+
+func process(work *types.Request, model *data.Model) {
 	log.Printf("Process Oobabooga(): Starting request")
 	work.SetStatusFunc(data.ResponseStatus_Running)
 
-	c := openai.NewClient("")
+	c := openai.NewClientWithConfig(config())
 	ctx := context.Background()
 
 	req := openai.ChatCompletionRequest{
-		Model:     openai.GPT3Dot5Turbo,
+		Model:     model.InternalModelID,
 		MaxTokens: 200,
 		Messages: []openai.ChatCompletionMessage{
 			{
@@ -65,7 +73,7 @@ func config() openai.ClientConfig {
 	return config
 }
 
-func ScanModels() []*data.Model {
+func scanModels() []*data.Model {
 	c := openai.NewClientWithConfig(config())
 	ctx := context.Background()
 
@@ -82,11 +90,14 @@ func ScanModels() []*data.Model {
 			continue
 		}
 		result = append(result, &data.Model{
-			ID:              "oogabooga_" + modelInfo.ID,
-			Name:            "Oogabooga - " + modelInfo.ID,
+			ID:              "oobabooga_" + modelInfo.ID,
+			Name:            "Oobabooga - " + modelInfo.ID,
 			Engine:          ENGINE_NAME,
 			InternalModelID: modelInfo.ID,
 		})
+		break
+		// We only take the first one because Oobabooga doesn't
+		// support loading different models on the fly.
 	}
 	return result
 }

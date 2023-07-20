@@ -5,16 +5,17 @@ import (
 	"sedwards2009/llm-workbench/internal/data"
 	"sedwards2009/llm-workbench/internal/engine/oobabooga"
 	"sedwards2009/llm-workbench/internal/engine/openai"
-	"sedwards2009/llm-workbench/internal/engine/request"
+	"sedwards2009/llm-workbench/internal/engine/types"
 )
 
 type Engine struct {
 	toWorkerChan      chan *message
-	workQueue         []*request.Request
+	workQueue         []*types.Request
 	engineDoneChan    chan bool
 	isComputing       bool
-	computeWorkerChan chan *request.Request
+	computeWorkerChan chan *types.Request
 	models            []*data.Model
+	engineBackends    []types.EngineBackend
 }
 
 type messageType uint8
@@ -36,12 +37,18 @@ type listModelsPayload struct {
 func NewEngine() *Engine {
 	engine := &Engine{
 		toWorkerChan:      make(chan *message, 16),
-		workQueue:         make([]*request.Request, 0),
+		workQueue:         make([]*types.Request, 0),
 		engineDoneChan:    make(chan bool, 16),
 		isComputing:       false,
-		computeWorkerChan: make(chan *request.Request, 2),
+		computeWorkerChan: make(chan *types.Request, 2),
 		models:            make([]*data.Model, 0),
 	}
+
+	engine.engineBackends = []types.EngineBackend{
+		openai.NewEngineBackend(),
+		oobabooga.NewEngineBackend(),
+	}
+
 	go engine.worker(engine.toWorkerChan)
 	return engine
 }
@@ -58,7 +65,7 @@ func (this *Engine) worker(in chan *message) {
 		case message := <-in:
 			switch message.messageType {
 			case messageType_Enqueue:
-				payload := message.payload.(*request.Request)
+				payload := message.payload.(*types.Request)
 				log.Printf("engine worker: enqueue %p", payload)
 				this.workQueue = append(this.workQueue, payload)
 				this.tryNextCompute()
@@ -89,29 +96,67 @@ func (this *Engine) tryNextCompute() {
 	this.isComputing = true
 }
 
-func (this *Engine) computeWorker(in chan *request.Request, done chan bool) {
+func (this *Engine) computeWorker(in chan *types.Request, done chan bool) {
 	for work := range in {
-		openai.Process(work)
-		done <- true
+		this.processWork(work, done)
 	}
+}
+
+func (this *Engine) processWork(work *types.Request, done chan bool) {
+	defer func() {
+		done <- true
+	}()
+
+	model := this.getModelByID(work.ModelSettings.ModelID)
+	if model == nil {
+		log.Printf("engine worker: Unable to find model with ID %s\n", work.ModelSettings.ModelID)
+		return
+	}
+
+	backend := this.getBackendByID(model.Engine)
+	if backend == nil {
+		log.Printf("engine worker: Unable to find backend with ID %s\n", model.Engine)
+		return
+	}
+
+	backend.Process(work, model)
+}
+
+func (this *Engine) getModelByID(modelID string) *data.Model {
+	for _, model := range this.models {
+		if model.ID == modelID {
+			return model
+		}
+	}
+	return nil
+}
+
+func (this *Engine) getBackendByID(backendID string) *types.EngineBackend {
+	for _, backend := range this.engineBackends {
+		if backend.ID == backendID {
+			return &backend
+		}
+	}
+	return nil
 }
 
 func (this *Engine) scanModels() {
 	allModels := []*data.Model{}
-	allModels = append(allModels, openai.ScanModels()...)
-	allModels = append(allModels, oobabooga.ScanModels()...)
-
+	for _, backend := range this.engineBackends {
+		allModels = append(allModels, backend.ScanModels()...)
+	}
 	this.models = allModels
 }
 
 func (this *Engine) Enqueue(prompt string, appendFunc func(string), completeFunc func(),
-	setStatusFunc func(data.ResponseStatus)) {
+	setStatusFunc func(data.ResponseStatus), modelSettings *data.ModelSettings) {
 
-	payload := &request.Request{
+	payload := &types.Request{
 		Prompt:        prompt,
 		AppendFunc:    appendFunc,
 		CompleteFunc:  completeFunc,
 		SetStatusFunc: setStatusFunc,
+		ModelSettings: modelSettings,
 	}
 	message := &message{
 		messageType: messageType_Enqueue,
