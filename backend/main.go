@@ -8,6 +8,7 @@ import (
 
 	"sedwards2009/llm-workbench/internal/broadcaster"
 	"sedwards2009/llm-workbench/internal/data"
+	"sedwards2009/llm-workbench/internal/data/responsestatus"
 	"sedwards2009/llm-workbench/internal/engine"
 	"sedwards2009/llm-workbench/internal/storage"
 
@@ -227,7 +228,7 @@ func handleResponsePost(c *gin.Context) {
 		sessionBroadcaster.Send(sessionId, "changed")
 	}
 
-	setStatusFunc := func(status data.ResponseStatus) {
+	setStatusFunc := func(status responsestatus.ResponseStatus) {
 		sessionStorage.SetResponseStatus(sessionId, responseId, status)
 		sessionBroadcaster.Send(sessionId, "changed")
 	}

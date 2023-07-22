@@ -2,12 +2,13 @@ package data
 
 import (
 	"encoding/json"
+	"sedwards2009/llm-workbench/internal/data/responsestatus"
 	"testing"
 )
 
 func TestResponseStatusMarshall(t *testing.T) {
 	response := &Response{
-		Status:            ResponseStatus_Pending,
+		Status:            responsestatus.Pending,
 		CreationTimestamp: "",
 		Prompt:            "A prompt",
 		Text:              "",
@@ -26,7 +27,7 @@ func TestResponseStatusMarshall(t *testing.T) {
 		return
 	}
 
-	if response2.Status != ResponseStatus_Pending {
+	if response2.Status != responsestatus.Pending {
 		t.Errorf("Round trip ResponseStatus is wrong.")
 	}
 }

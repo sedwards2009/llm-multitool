@@ -26,7 +26,7 @@ export interface ModelSettings {
   modelId: string;
 }
 
-export type ResponseStatus = "done" | "pending" | "running" | "error";
+export type ResponseStatus = "Done" | "Pending" | "Running" | "Error";
 
 export interface Response {
   id: string;

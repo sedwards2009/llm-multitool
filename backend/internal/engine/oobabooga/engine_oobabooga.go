@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"sedwards2009/llm-workbench/internal/data"
+	"sedwards2009/llm-workbench/internal/data/responsestatus"
 	"sedwards2009/llm-workbench/internal/engine/types"
 
 	"github.com/sashabaranov/go-openai"
@@ -23,7 +24,7 @@ func NewEngineBackend() types.EngineBackend {
 
 func process(work *types.Request, model *data.Model) {
 	log.Printf("Process Oobabooga(): Starting request")
-	work.SetStatusFunc(data.ResponseStatus_Running)
+	work.SetStatusFunc(responsestatus.Running)
 
 	c := openai.NewClientWithConfig(config())
 	ctx := context.Background()
@@ -55,12 +56,12 @@ func process(work *types.Request, model *data.Model) {
 
 		if err != nil {
 			log.Printf("Process Oobabooga(): ChatCompletionStream error: %v\n", err)
-			work.SetStatusFunc(data.ResponseStatus_Error)
+			work.SetStatusFunc(responsestatus.Error)
 			break
 		}
 		work.AppendFunc(response.Choices[0].Delta.Content)
 	}
-	work.SetStatusFunc(data.ResponseStatus_Done)
+	work.SetStatusFunc(responsestatus.Done)
 	log.Printf("Process Oobabooga(): ChatCompletionStream completed")
 	work.CompleteFunc()
 }

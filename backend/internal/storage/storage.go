@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sedwards2009/llm-workbench/internal/data"
+	"sedwards2009/llm-workbench/internal/data/responsestatus"
 	"sort"
 	"strings"
 	"time"
@@ -178,7 +179,7 @@ func (this *SessionStorage) NewResponse(sessionId string) (*data.Response, error
 	newResponse := &data.Response{
 		ID:                uuid.NewString(),
 		CreationTimestamp: now.Format(time.RFC3339),
-		Status:            data.ResponseStatus_Pending,
+		Status:            responsestatus.Pending,
 		Prompt:            session.Prompt,
 		Text:              "",
 	}
@@ -249,7 +250,7 @@ func (this *SessionStorage) AppendToResponse(sessionId string, responseId string
 	})
 }
 
-func (this *SessionStorage) SetResponseStatus(sessionId string, responseId string, status data.ResponseStatus) error {
+func (this *SessionStorage) SetResponseStatus(sessionId string, responseId string, status responsestatus.ResponseStatus) error {
 	return this.modifyToResponse(sessionId, responseId, func(r *data.Response) {
 		r.Status = status
 	})

@@ -3,6 +3,7 @@ package engine
 import (
 	"log"
 	"sedwards2009/llm-workbench/internal/data"
+	"sedwards2009/llm-workbench/internal/data/responsestatus"
 	"sedwards2009/llm-workbench/internal/engine/oobabooga"
 	"sedwards2009/llm-workbench/internal/engine/openai"
 	"sedwards2009/llm-workbench/internal/engine/types"
@@ -149,7 +150,7 @@ func (this *Engine) scanModels() {
 }
 
 func (this *Engine) Enqueue(prompt string, appendFunc func(string), completeFunc func(),
-	setStatusFunc func(data.ResponseStatus), modelSettings *data.ModelSettings) {
+	setStatusFunc func(responsestatus.ResponseStatus), modelSettings *data.ModelSettings) {
 
 	payload := &types.Request{
 		Prompt:        prompt,

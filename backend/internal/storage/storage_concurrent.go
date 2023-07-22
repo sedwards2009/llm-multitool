@@ -1,6 +1,9 @@
 package storage
 
-import "sedwards2009/llm-workbench/internal/data"
+import (
+	"sedwards2009/llm-workbench/internal/data"
+	"sedwards2009/llm-workbench/internal/data/responsestatus"
+)
 
 type ConcurrentSessionStorage struct {
 	toWorker chan *message
@@ -63,7 +66,7 @@ type appendToResponsePayload struct {
 type setResponseStatusPayload struct {
 	sessionId  string
 	responseId string
-	status     data.ResponseStatus
+	status     responsestatus.ResponseStatus
 }
 
 type response struct {
@@ -211,7 +214,7 @@ func (this *ConcurrentSessionStorage) AppendToResponse(sessionId string, respons
 	return *(response.err)
 }
 
-func (this *ConcurrentSessionStorage) SetResponseStatus(sessionId string, responseId string, status data.ResponseStatus) error {
+func (this *ConcurrentSessionStorage) SetResponseStatus(sessionId string, responseId string, status responsestatus.ResponseStatus) error {
 	returnChannel := make(chan *response)
 	this.toWorker <- &message{
 		messageType: messageType_SetResponseStatus,
