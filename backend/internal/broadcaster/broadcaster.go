@@ -1,7 +1,7 @@
 package broadcaster
 
 import (
-	"github.com/bobg/go-generics/slices"
+	"github.com/bobg/go-generics/v2/slices"
 )
 
 type listener struct {
@@ -49,9 +49,9 @@ func (this *Broadcaster) worker(in chan message, done chan bool) {
 
 		case messageType_Unregister:
 			targetChan := message.listenerChan
-			this.listeners, _ = slices.Filter(this.listeners,
-				func(l listener) (bool, error) {
-					return l.listenerChan != targetChan, nil
+			this.listeners = slices.Filter(this.listeners,
+				func(l listener) bool {
+					return l.listenerChan != targetChan
 				})
 
 		case messageType_Send:

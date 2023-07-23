@@ -121,6 +121,23 @@ export async function deleteResponse(sessionId: string, responseId: string): Pro
   return response.ok;
 }
 
+export async function newMessage(session: Session, responseId: string, reply: string): Promise<void> {
+  await flushQueues();
+
+  const response = await fetch(`${SERVER_BASE_URL}/session/${session.id}/response/${responseId}/message`,
+    {
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({value: reply}),
+      method: "POST"
+    });
+  try {
+    if (response.ok) {
+      return;
+    }
+  } catch (error) {
+    console.error("Could not parse JSON", error);
+  }
+}
 
 export enum SessionMonitorState {
   IDLE,

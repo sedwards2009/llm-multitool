@@ -9,9 +9,11 @@ import (
 	"sedwards2009/llm-workbench/internal/broadcaster"
 	"sedwards2009/llm-workbench/internal/data"
 	"sedwards2009/llm-workbench/internal/data/responsestatus"
+	"sedwards2009/llm-workbench/internal/data/role"
 	"sedwards2009/llm-workbench/internal/engine"
 	"sedwards2009/llm-workbench/internal/storage"
 
+	"github.com/bobg/go-generics/v2/slices"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -60,6 +62,8 @@ func setupRouter() *gin.Engine {
 	r.DELETE("/session/:sessionId/response/:responseId", handleResponseDelete)
 	r.GET("/model", handleModelOverviewGet)
 	r.PUT("/session/:sessionId/modelSettings", handleSessionModelSettingsPut)
+	r.POST("/session/:sessionId/response/:responseId/message", handleMessagePost)
+
 	return r
 }
 
@@ -219,8 +223,10 @@ func handleResponsePost(c *gin.Context) {
 	}
 
 	responseId := response.ID
+	sessionStorage.AppendMessage(sessionId, responseId, role.Assistant, "")
+
 	appendFunc := func(text string) {
-		sessionStorage.AppendToResponse(sessionId, responseId, text)
+		sessionStorage.AppendToLastMessage(sessionId, responseId, text)
 		sessionBroadcaster.Send(sessionId, "changed")
 	}
 
@@ -278,6 +284,59 @@ func handleSessionModelSettingsPut(c *gin.Context) {
 	sessionStorage.WriteSession(session)
 
 	c.JSON(http.StatusOK, session)
+}
+
+func handleMessagePost(c *gin.Context) {
+	sessionId := c.Params.ByName("sessionId")
+	session := sessionStorage.ReadSession(sessionId)
+	if session == nil {
+		c.String(http.StatusNotFound, "Session not found")
+		return
+	}
+
+	responseId := c.Params.ByName("responseId")
+	responseIndex := slices.IndexFunc(session.Responses, func(r *data.Response) bool {
+		return responseId == r.ID
+	})
+	if responseIndex == -1 {
+		c.String(http.StatusNotFound, "Response not found")
+		return
+	}
+
+	response := session.Responses[responseIndex]
+
+	var postData struct {
+		Value string `json:"value"`
+	}
+	if err := c.ShouldBindJSON(&postData); err != nil {
+		c.String(http.StatusBadRequest, "Couldn't parse the JSON POST body.")
+		return
+	}
+	sessionStorage.AppendMessage(sessionId, responseId, role.User, postData.Value)
+
+	sessionStorage.AppendMessage(sessionId, responseId, role.Assistant, "")
+	session = sessionStorage.ReadSession(sessionId)
+	responseIndex = slices.IndexFunc(session.Responses, func(r *data.Response) bool {
+		return responseId == r.ID
+	})
+	response = session.Responses[responseIndex]
+
+	appendFunc := func(text string) {
+		sessionStorage.AppendToLastMessage(sessionId, responseId, text)
+		sessionBroadcaster.Send(sessionId, "changed")
+	}
+
+	completeFunc := func() {
+		sessionBroadcaster.Send(sessionId, "changed")
+	}
+
+	setStatusFunc := func(status responsestatus.ResponseStatus) {
+		sessionStorage.SetResponseStatus(sessionId, responseId, status)
+		sessionBroadcaster.Send(sessionId, "changed")
+	}
+
+	llmEngine.Enqueue(response.Messages, appendFunc, completeFunc, setStatusFunc, session.ModelSettings)
+	c.JSON(http.StatusOK, response)
 }
 
 func main() {

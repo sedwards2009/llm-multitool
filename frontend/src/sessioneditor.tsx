@@ -2,7 +2,8 @@ import { ChangeEvent, KeyboardEventHandler, useEffect, useState } from "react";
 import { ModelOverview, Session } from "./data";
 import { navigate } from "raviger";
 import TextareaAutosize from "react-textarea-autosize";
-import { loadSession, newResponse, setSessionPrompt, deleteResponse, SessionMonitor, SessionMonitorState, setSessionModel } from "./dataloading";
+import { loadSession, newResponse, setSessionPrompt, deleteResponse, SessionMonitor, SessionMonitorState,
+  setSessionModel, newMessage } from "./dataloading";
 import { ResponseEditor } from "./responseeditor";
 import { ModelSettings } from "./modelsettings";
 
@@ -88,6 +89,13 @@ export function SessionEditor({sessionId, modelOverview}: Props): JSX.Element {
     }
   };
 
+  const onReply = (responseId: string, reply: string) => {
+    (async () => {
+      await newMessage(session as Session, responseId, reply);
+      await loadSessionData();
+    })();
+  };
+
   return <div className="session-editor">
     {session == null && <div>Loading</div>}
     {session && <>
@@ -117,7 +125,12 @@ export function SessionEditor({sessionId, modelOverview}: Props): JSX.Element {
         </div>
         <div className="session-response-pane">
           {
-            session.responses.map(r => <ResponseEditor response={r} key={r.id} onDeleteClicked={onDeleteClicked} />)
+            session.responses.map(r => <ResponseEditor
+              response={r}
+              key={r.id}
+              onDeleteClicked={onDeleteClicked}
+              onReply={text => onReply(r.id, text)}
+            />)
           }
         </div>
       </>

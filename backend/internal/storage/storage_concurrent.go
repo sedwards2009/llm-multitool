@@ -3,6 +3,7 @@ package storage
 import (
 	"sedwards2009/llm-workbench/internal/data"
 	"sedwards2009/llm-workbench/internal/data/responsestatus"
+	"sedwards2009/llm-workbench/internal/data/role"
 )
 
 type ConcurrentSessionStorage struct {
@@ -30,7 +31,8 @@ const (
 	messageType_WriteSession
 	messageType_NewResponse
 	messageType_DeleteResponse
-	messageType_AppendToResponse
+	messageType_AppendMessage
+	messageType_AppendToLastMessage
 	messageType_SetResponseStatus
 )
 
@@ -57,7 +59,14 @@ type deleteResponsePayload struct {
 	responseId string
 }
 
-type appendToResponsePayload struct {
+type appendMessagePayload struct {
+	sessionId  string
+	responseId string
+	role       role.Role
+	text       string
+}
+
+type appendToLastMessagePayload struct {
 	sessionId  string
 	responseId string
 	text       string
@@ -115,9 +124,16 @@ func worker(sessionStorage *SessionStorage, in chan *message) {
 				err: &err,
 			}
 
-		case messageType_AppendToResponse:
-			payload := message.payload.(*appendToResponsePayload)
-			err := sessionStorage.AppendToResponse(payload.sessionId, payload.responseId, payload.text)
+		case messageType_AppendMessage:
+			payload := message.payload.(*appendMessagePayload)
+			err := sessionStorage.AppendMessage(payload.sessionId, payload.responseId, payload.role, payload.text)
+			message.out <- &response{
+				err: &err,
+			}
+
+		case messageType_AppendToLastMessage:
+			payload := message.payload.(*appendToLastMessagePayload)
+			err := sessionStorage.AppendToLastMessage(payload.sessionId, payload.responseId, payload.text)
 			message.out <- &response{
 				err: &err,
 			}
@@ -202,12 +218,24 @@ func (this *ConcurrentSessionStorage) DeleteResponse(sessionId string, responseI
 	return *(response.err)
 }
 
-func (this *ConcurrentSessionStorage) AppendToResponse(sessionId string, responseId string, text string) error {
+func (this *ConcurrentSessionStorage) AppendMessage(sessionId string, responseId string, messageRole role.Role, text string) error {
 	returnChannel := make(chan *response)
 	this.toWorker <- &message{
-		messageType: messageType_AppendToResponse,
+		messageType: messageType_AppendMessage,
 		out:         returnChannel,
-		payload:     &appendToResponsePayload{sessionId: sessionId, responseId: responseId, text: text},
+		payload:     &appendMessagePayload{sessionId: sessionId, responseId: responseId, role: messageRole, text: text},
+	}
+	response := <-returnChannel
+	close(returnChannel)
+	return *(response.err)
+}
+
+func (this *ConcurrentSessionStorage) AppendToLastMessage(sessionId string, responseId string, text string) error {
+	returnChannel := make(chan *response)
+	this.toWorker <- &message{
+		messageType: messageType_AppendToLastMessage,
+		out:         returnChannel,
+		payload:     &appendToLastMessagePayload{sessionId: sessionId, responseId: responseId, text: text},
 	}
 	response := <-returnChannel
 	close(returnChannel)

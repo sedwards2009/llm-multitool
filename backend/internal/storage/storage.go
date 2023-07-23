@@ -269,18 +269,19 @@ func (this *SessionStorage) modifyToResponse(sessionId string, responseId string
 	return nil
 }
 
-func (this *SessionStorage) AppendToResponse(sessionId string, responseId string, text string) error {
+func (this *SessionStorage) AppendMessage(sessionId string, responseId string, messageRole role.Role, text string) error {
+	return this.modifyToResponse(sessionId, responseId, func(r *data.Response) {
+		r.Messages = append(r.Messages, data.Message{
+			ID:   uuid.NewString(),
+			Role: messageRole,
+			Text: text,
+		})
+	})
+}
+
+func (this *SessionStorage) AppendToLastMessage(sessionId string, responseId string, text string) error {
 	return this.modifyToResponse(sessionId, responseId, func(r *data.Response) {
 		lastIndex := len(r.Messages) - 1
-		if r.Messages[lastIndex].Role == role.User {
-			r.Messages = append(r.Messages, data.Message{
-				ID:   uuid.NewString(),
-				Role: role.Assistant,
-				Text: "",
-			})
-			lastIndex++
-		}
-
 		r.Messages[lastIndex].Text = r.Messages[lastIndex].Text + text
 	})
 }
