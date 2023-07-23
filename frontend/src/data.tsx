@@ -38,15 +38,16 @@ export interface Response {
 export type Role = "User" | "Assistant";
 
 export interface Message {
-	role: Role;
-	text: string;
+  id: string;
+  role: Role;
+  text: string;
 }
 
 export interface Model {
-	id: string;
+  id: string;
   name: string;
 }
 
 export interface ModelOverview {
-	models: Model[];
+  models: Model[];
 }

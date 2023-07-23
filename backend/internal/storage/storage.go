@@ -169,6 +169,7 @@ func copyMessages(srcMessages []data.Message) []data.Message {
 
 func copyMessage(srcMessage *data.Message) data.Message {
 	return data.Message{
+		ID:   srcMessage.ID,
 		Role: srcMessage.Role,
 		Text: srcMessage.Text,
 	}
@@ -273,6 +274,7 @@ func (this *SessionStorage) AppendToResponse(sessionId string, responseId string
 		lastIndex := len(r.Messages) - 1
 		if r.Messages[lastIndex].Role == role.User {
 			r.Messages = append(r.Messages, data.Message{
+				ID:   uuid.NewString(),
 				Role: role.Assistant,
 				Text: "",
 			})

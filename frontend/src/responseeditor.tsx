@@ -28,6 +28,6 @@ export function ResponseEditor({response, onDeleteClicked}: Props): JSX.Element 
       <h4 className="prompt-header" onClick={onPromptClicked}><i className={classNames({"fa": true, "fa-chevron-right": !isPromptOpen, "fa-chevron-down": isPromptOpen})}></i> Prompt </h4>
     }
     {response.messages.length !==0 && isPromptOpen && <ResponseMessage message={response.messages[0]} />}
-    {response.messages.slice(1).map(m => <ResponseMessage message={m}/>)}
+    {response.messages.slice(1).map(m => <ResponseMessage key={m.id} message={m}/>)}
   </div>;
 }

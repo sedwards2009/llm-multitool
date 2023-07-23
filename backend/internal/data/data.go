@@ -53,6 +53,7 @@ type Response struct {
 }
 
 type Message struct {
+	ID   string    `json:"id"`
 	Role role.Role `json:"role"`
 	Text string    `json:"text"`
 }

@@ -13,6 +13,7 @@ func TestResponseStatusMarshall(t *testing.T) {
 		CreationTimestamp: "",
 		Messages: []Message{
 			{
+				ID:   "0987654321",
 				Role: role.User,
 				Text: "A prompt",
 			},
