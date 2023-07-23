@@ -32,8 +32,14 @@ export interface Response {
   id: string;
   creationTimestamp: string;
   status: ResponseStatus;
-  prompt: string;
-  text: string;
+  messages: Message[];
+}
+
+export type Role = "User" | "Assistant";
+
+export interface Message {
+	role: Role;
+	text: string;
 }
 
 export interface Model {

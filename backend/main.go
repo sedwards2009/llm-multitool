@@ -78,7 +78,7 @@ const (
 	// Time allowed to write a message to the websocket.
 	websocketWriteWait  = 10 * time.Second
 	websocketPongWait   = 5 * time.Second
-	changeThrottleDelay = 500 * time.Millisecond
+	changeThrottleDelay = 250 * time.Millisecond
 	websocketPingPeriod = (websocketPongWait * 9) / 10
 )
 
@@ -233,7 +233,7 @@ func handleResponsePost(c *gin.Context) {
 		sessionBroadcaster.Send(sessionId, "changed")
 	}
 
-	llmEngine.Enqueue(response.Prompt, appendFunc, completeFunc, setStatusFunc, session.ModelSettings)
+	llmEngine.Enqueue(response.Messages, appendFunc, completeFunc, setStatusFunc, session.ModelSettings)
 	c.JSON(http.StatusOK, response)
 }
 

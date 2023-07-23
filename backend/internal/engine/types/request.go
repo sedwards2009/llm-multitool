@@ -6,7 +6,7 @@ import (
 )
 
 type Request struct {
-	Prompt        string
+	Messages      []data.Message
 	AppendFunc    func(string)
 	CompleteFunc  func()
 	SetStatusFunc func(status responsestatus.ResponseStatus)

@@ -40,6 +40,7 @@ UL.tabs {
     display: block;
     height: $ui-tab-height;
     -webkit-user-drag: element;
+    cursor: pointer;
 
     padding: 0;
     padding-left: 0.5rem;
@@ -52,7 +53,7 @@ UL.tabs {
     box-shadow: inherit;
 
     border: 1px solid $tab-border-color;
-
+    width: $tab-max-width;
     max-width: $tab-max-width;
 
     &.active {

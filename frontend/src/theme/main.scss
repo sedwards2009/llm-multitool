@@ -25,3 +25,17 @@
 .prompt-header {
   cursor: pointer;
 }
+
+.response-message {
+  display: flex;
+  gap: $component-padding-horizontal;
+
+  & > .response-message-gutter {
+    color: $headings-color;
+  }
+
+  & > .response-message-text > P {
+    margin-top: 0px;
+    margin-bottom: 0px;
+  }
+}

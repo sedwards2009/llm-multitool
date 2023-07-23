@@ -7,9 +7,12 @@ import (
 	"log"
 	"sedwards2009/llm-workbench/internal/data"
 	"sedwards2009/llm-workbench/internal/data/responsestatus"
+	"sedwards2009/llm-workbench/internal/data/role"
 	"sedwards2009/llm-workbench/internal/engine/types"
 
-	"github.com/sashabaranov/go-openai"
+	"github.com/bobg/go-generics/v2/slices"
+
+	openai "github.com/sashabaranov/go-openai"
 )
 
 const ENGINE_NAME = "oobabooga"
@@ -32,12 +35,16 @@ func process(work *types.Request, model *data.Model) {
 	req := openai.ChatCompletionRequest{
 		Model:     model.InternalModelID,
 		MaxTokens: 200,
-		Messages: []openai.ChatCompletionMessage{
-			{
-				Role:    openai.ChatMessageRoleUser,
-				Content: work.Prompt,
-			},
-		},
+		Messages: slices.Map(work.Messages, func(m data.Message) openai.ChatCompletionMessage {
+			openaiRole := openai.ChatMessageRoleUser
+			if m.Role == role.Assistant {
+				openaiRole = openai.ChatMessageRoleAssistant
+			}
+			return openai.ChatCompletionMessage{
+				Role:    openaiRole,
+				Content: m.Text,
+			}
+		}),
 		Stream: true,
 	}
 	stream, err := c.CreateChatCompletionStream(ctx, req)

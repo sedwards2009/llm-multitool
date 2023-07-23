@@ -149,11 +149,11 @@ func (this *Engine) scanModels() {
 	this.models = allModels
 }
 
-func (this *Engine) Enqueue(prompt string, appendFunc func(string), completeFunc func(),
+func (this *Engine) Enqueue(messages []data.Message, appendFunc func(string), completeFunc func(),
 	setStatusFunc func(responsestatus.ResponseStatus), modelSettings *data.ModelSettings) {
 
 	payload := &types.Request{
-		Prompt:        prompt,
+		Messages:      messages,
 		AppendFunc:    appendFunc,
 		CompleteFunc:  completeFunc,
 		SetStatusFunc: setStatusFunc,

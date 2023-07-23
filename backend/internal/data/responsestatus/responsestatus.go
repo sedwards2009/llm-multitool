@@ -1,6 +1,5 @@
 package responsestatus
 
-// -------------------------------------------------------------------------
 type ResponseStatus uint8
 
 const (

@@ -3,6 +3,7 @@ package data
 import (
 	"encoding/json"
 	"sedwards2009/llm-workbench/internal/data/responsestatus"
+	"sedwards2009/llm-workbench/internal/data/role"
 	"testing"
 )
 
@@ -10,8 +11,12 @@ func TestResponseStatusMarshall(t *testing.T) {
 	response := &Response{
 		Status:            responsestatus.Pending,
 		CreationTimestamp: "",
-		Prompt:            "A prompt",
-		Text:              "",
+		Messages: []Message{
+			{
+				Role: role.User,
+				Text: "A prompt",
+			},
+		},
 	}
 
 	jsonData, err := json.Marshal(response)

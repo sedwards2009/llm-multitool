@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sedwards2009/llm-workbench/internal/data"
 	"sedwards2009/llm-workbench/internal/data/responsestatus"
+	"sedwards2009/llm-workbench/internal/data/role"
 	"sort"
 	"strings"
 	"time"
@@ -79,6 +80,11 @@ func (this *SessionStorage) readSession(filePath string) *data.Session {
 	if session.ModelSettings == nil {
 		session.ModelSettings = &data.ModelSettings{}
 	}
+	for _, r := range session.Responses {
+		if r.Messages == nil {
+			r.Messages = []data.Message{}
+		}
+	}
 	return &session
 }
 
@@ -148,10 +154,24 @@ func copyResponse(srcResponse *data.Response) *data.Response {
 		ID:                srcResponse.ID,
 		CreationTimestamp: srcResponse.CreationTimestamp,
 		Status:            srcResponse.Status,
-		Prompt:            srcResponse.Prompt,
-		Text:              srcResponse.Text,
+		Messages:          copyMessages(srcResponse.Messages),
 	}
 	return copy
+}
+
+func copyMessages(srcMessages []data.Message) []data.Message {
+	result := []data.Message{}
+	for _, m := range srcMessages {
+		result = append(result, copyMessage(&m))
+	}
+	return result
+}
+
+func copyMessage(srcMessage *data.Message) data.Message {
+	return data.Message{
+		Role: srcMessage.Role,
+		Text: srcMessage.Text,
+	}
 }
 
 func (this *SessionStorage) sessionSummary(session *data.Session) *data.SessionSummary {
@@ -180,8 +200,12 @@ func (this *SessionStorage) NewResponse(sessionId string) (*data.Response, error
 		ID:                uuid.NewString(),
 		CreationTimestamp: now.Format(time.RFC3339),
 		Status:            responsestatus.Pending,
-		Prompt:            session.Prompt,
-		Text:              "",
+		Messages: []data.Message{
+			{
+				Role: role.User,
+				Text: session.Prompt,
+			},
+		},
 	}
 	newResponsesSlice = append(newResponsesSlice, newResponse)
 
@@ -246,7 +270,16 @@ func (this *SessionStorage) modifyToResponse(sessionId string, responseId string
 
 func (this *SessionStorage) AppendToResponse(sessionId string, responseId string, text string) error {
 	return this.modifyToResponse(sessionId, responseId, func(r *data.Response) {
-		r.Text = r.Text + text
+		lastIndex := len(r.Messages) - 1
+		if r.Messages[lastIndex].Role == role.User {
+			r.Messages = append(r.Messages, data.Message{
+				Role: role.Assistant,
+				Text: "",
+			})
+			lastIndex++
+		}
+
+		r.Messages[lastIndex].Text = r.Messages[lastIndex].Text + text
 	})
 }
 

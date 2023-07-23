@@ -1,6 +1,9 @@
 package data
 
-import "sedwards2009/llm-workbench/internal/data/responsestatus"
+import (
+	"sedwards2009/llm-workbench/internal/data/responsestatus"
+	"sedwards2009/llm-workbench/internal/data/role"
+)
 
 type SessionOverview struct {
 	SessionSummaries []*SessionSummary `json:"sessionSummaries"`
@@ -46,6 +49,10 @@ type Response struct {
 	ID                string                        `json:"id"`
 	CreationTimestamp string                        `json:"creationTimestamp"`
 	Status            responsestatus.ResponseStatus `json:"status"`
-	Prompt            string                        `json:"prompt"`
-	Text              string                        `json:"text"`
+	Messages          []Message                     `json:"messages"`
+}
+
+type Message struct {
+	Role role.Role `json:"role"`
+	Text string    `json:"text"`
 }
