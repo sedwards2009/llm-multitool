@@ -57,6 +57,10 @@ export async function newSession(): Promise<Session | null> {
   return null;
 }
 
+export async function deleteSession(sessionId: string): Promise<void> {
+  await fetch(`${SERVER_BASE_URL}/session/${sessionId}`, {method: "DELETE"});
+}
+
 async function putSessionProperty(sessionId: string, propertyName: string, value: any): Promise<void> {
   await fetch(`${SERVER_BASE_URL}/session/${sessionId}/${propertyName}`,
     {

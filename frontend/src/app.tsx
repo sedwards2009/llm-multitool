@@ -32,5 +32,9 @@ export function App() {
     return <div>Loading...</div>;
   }
 
-  return <MainApp modelOverview={modelOverview} sessionOverview={sessionOverview} onSessionChange={onSessionChange} />;
+  return <MainApp
+    modelOverview={modelOverview}
+    sessionOverview={sessionOverview}
+    onSessionChange={onSessionChange}
+    />;
 }

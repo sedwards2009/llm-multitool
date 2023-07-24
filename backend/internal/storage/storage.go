@@ -98,21 +98,29 @@ func (this *SessionStorage) WriteSession(session *data.Session) {
 	this.writeSession(session)
 }
 
+func (this *SessionStorage) DeleteSession(id string) {
+	delete(this.sessions, id)
+	delete(this.sessionSummaries, id)
+	os.Remove(this.sessionFilepath(id))
+}
+
 func (this *SessionStorage) cacheSession(session *data.Session) {
 	this.sessions[session.ID] = session
 	delete(this.sessionSummaries, session.ID)
 }
 
-func (this *SessionStorage) writeSession(session *data.Session) {
-	fileName := session.ID + ".json"
+func (this *SessionStorage) sessionFilepath(sessionId string) string {
+	return filepath.Join(this.storagePath, sessionId+".json")
+}
 
+func (this *SessionStorage) writeSession(session *data.Session) {
 	jsonData, err := json.Marshal(session)
 	if err != nil {
 		log.Fatalf("Couldn't marshal Session object: %v", err)
 		panic(err)
 	}
 
-	filePath := filepath.Join(this.storagePath, fileName)
+	filePath := this.sessionFilepath(session.ID)
 	err = ioutil.WriteFile(filePath, jsonData, 0644)
 	if err != nil {
 		log.Fatalf("Couldn't write Session object to '%s': %v", filePath, err)

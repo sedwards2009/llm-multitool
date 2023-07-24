@@ -28,6 +28,7 @@ const (
 	messageType_ReadSessionOverview messageType = iota
 	messageType_ReadSession
 	messageType_NewSession
+	messageType_DeleteSession
 	messageType_WriteSession
 	messageType_NewResponse
 	messageType_DeleteResponse
@@ -43,6 +44,10 @@ type message struct {
 }
 
 type readSessionPayload struct {
+	sessionId string
+}
+
+type deleteSessionPayload struct {
 	sessionId string
 }
 
@@ -103,6 +108,11 @@ func worker(sessionStorage *SessionStorage, in chan *message) {
 			message.out <- &response{
 				session: sessionStorage.NewSession(),
 			}
+
+		case messageType_DeleteSession:
+			payload := message.payload.(*deleteSessionPayload)
+			sessionStorage.DeleteSession(payload.sessionId)
+			message.out <- &response{}
 
 		case messageType_WriteSession:
 			payload := message.payload.(*writeSessionPayload)
@@ -170,6 +180,17 @@ func (this *ConcurrentSessionStorage) NewSession() *data.Session {
 	return response.session
 }
 
+func (this *ConcurrentSessionStorage) DeleteSession(id string) {
+	returnChannel := make(chan *response)
+	this.toWorker <- &message{
+		messageType: messageType_DeleteSession,
+		out:         returnChannel,
+		payload:     &deleteSessionPayload{sessionId: id},
+	}
+	<-returnChannel
+	close(returnChannel)
+}
+
 func (this *ConcurrentSessionStorage) ReadSession(id string) *data.Session {
 	returnChannel := make(chan *response)
 	this.toWorker <- &message{
@@ -191,7 +212,6 @@ func (this *ConcurrentSessionStorage) WriteSession(session *data.Session) {
 	}
 	<-returnChannel
 	close(returnChannel)
-	return
 }
 
 func (this *ConcurrentSessionStorage) NewResponse(sessionId string) (*data.Response, error) {

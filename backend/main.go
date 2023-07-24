@@ -57,6 +57,7 @@ func setupRouter() *gin.Engine {
 	r.POST("/session", handleNewSession)
 	r.GET("/session/:sessionId", handleSessionGet)
 	r.PUT("/session/:sessionId/prompt", handleSessionPromptPut)
+	r.DELETE("/session/:sessionId", handleSessionDelete)
 	r.POST("/session/:sessionId/response", handleResponsePost)
 	r.GET("/session/:sessionId/changes", handleSessionChangesGet)
 	r.DELETE("/session/:sessionId/response/:responseId", handleResponseDelete)
@@ -183,6 +184,17 @@ func handleSessionGet(c *gin.Context) {
 		return
 	}
 	c.String(http.StatusNotFound, "Session not found")
+}
+
+func handleSessionDelete(c *gin.Context) {
+	sessionId := c.Params.ByName("sessionId")
+	session := sessionStorage.ReadSession(sessionId)
+	if session == nil {
+		c.String(http.StatusNotFound, "Session not found")
+		return
+	}
+	sessionStorage.DeleteSession(sessionId)
+	c.Status(http.StatusNoContent)
 }
 
 func handleSessionPromptPut(c *gin.Context) {

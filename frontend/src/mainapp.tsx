@@ -6,7 +6,7 @@ import { Home } from "./home";
 export interface Props {
   modelOverview: ModelOverview;
   sessionOverview: SessionOverview;
-  onSessionChange: ()=> void;
+  onSessionChange: () => void;
 }
 
 export function MainApp({ modelOverview, sessionOverview, onSessionChange }: Props): JSX.Element {

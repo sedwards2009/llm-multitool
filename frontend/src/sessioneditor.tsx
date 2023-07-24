@@ -10,9 +10,10 @@ import { ModelSettings } from "./modelsettings";
 export interface Props {
   sessionId: string;
   modelOverview: ModelOverview;
+  onSessionDelete: () => void;
 }
 
-export function SessionEditor({sessionId, modelOverview}: Props): JSX.Element {
+export function SessionEditor({sessionId, modelOverview, onSessionDelete}: Props): JSX.Element {
   const [session, setSession] = useState<Session | null>(null);
   const [sessionReload, setSessionReload] = useState<number>(0);
   const [sessionMonitor, setSessionMonitor] = useState<SessionMonitor | null>(null);
@@ -100,6 +101,10 @@ export function SessionEditor({sessionId, modelOverview}: Props): JSX.Element {
     {session == null && <div>Loading</div>}
     {session && <>
         <div className="session-prompt-pane card">
+          <div className="controls">
+            <button className="microtool danger" onClick={onSessionDelete}><i className="fa fa-times"></i></button>
+          </div>
+
           <ModelSettings
             modelOverview={modelOverview}
             selectedModelId={selectedModelId}
