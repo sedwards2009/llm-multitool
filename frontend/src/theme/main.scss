@@ -19,7 +19,8 @@
 
 .session-editor {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+  max-width: 80rem;
 }
 
 .prompt-header {
@@ -30,8 +31,20 @@
   display: flex;
   gap: $component-padding-horizontal;
 
+  &:not(:last-child) {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid $hr-border-color;
+    margin-bottom: 0.5rem;
+  }
+
   & > .response-message-gutter {
     color: $headings-color;
+    width: 2rem;
+    flex: 0 0 auto;
+  }
+
+  & > .response-message-text {
+    flex-grow: 1;
   }
 
   & > .response-message-text > P {

@@ -10,7 +10,7 @@ export interface Props {
 export function ModelSettings({modelOverview, selectedModelId, setSelectedModelId}: Props): JSX.Element  {
   return <div className="gui-layout cols-1-3">
     <div>
-      <i className="fa fa-brain"></i> Model:
+      <i className="fa fa-robot"></i>&nbsp;&nbsp;Model:
     </div>
     <div>
       <select

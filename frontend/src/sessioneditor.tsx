@@ -120,13 +120,15 @@ export function SessionEditor({sessionId, modelOverview, onSessionDelete}: Props
             }
           </div>
 
-          <TextareaAutosize
-            className="char-width-30"
-            value={session.prompt}
-            onChange={onPromptChange}
-            onKeyDown={onKeyDown}
-          /><br />
-          <button className="success" title="Shift+Enter" onClick={onSubmitClicked}>Submit</button>
+          <div className="gui-packed-row">
+            <TextareaAutosize
+              className="expand"
+              value={session.prompt}
+              onChange={onPromptChange}
+              onKeyDown={onKeyDown}
+            />
+            <button className="compact small success" title="Shift+Enter" onClick={onSubmitClicked}>Send</button>
+          </div>
         </div>
         <div className="session-response-pane">
           {
