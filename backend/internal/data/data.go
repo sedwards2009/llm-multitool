@@ -29,7 +29,8 @@ type Session struct {
 }
 
 type ModelSettings struct {
-	ModelID string `json:"modelId"`
+	ModelID    string `json:"modelId"`
+	TemplateID string `json:"templateId"`
 }
 
 type ModelOverview struct {
@@ -43,8 +44,6 @@ type Model struct {
 	InternalModelID string
 }
 
-//-------------------------------------------------------------------------
-
 type Response struct {
 	ID                string                        `json:"id"`
 	CreationTimestamp string                        `json:"creationTimestamp"`
@@ -56,4 +55,14 @@ type Message struct {
 	ID   string    `json:"id"`
 	Role role.Role `json:"role"`
 	Text string    `json:"text"`
+}
+
+type Template struct {
+	ID             string `json:"id"`
+	Name           string `json:"name"`
+	TemplateString string `json:"templateString"`
+}
+
+type TemplateOverview struct {
+	Templates []*Template `json:"templates"`
 }

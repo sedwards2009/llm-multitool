@@ -209,12 +209,7 @@ func (this *SessionStorage) NewResponse(sessionId string) (*data.Response, error
 		ID:                uuid.NewString(),
 		CreationTimestamp: now.Format(time.RFC3339),
 		Status:            responsestatus.Pending,
-		Messages: []data.Message{
-			{
-				Role: role.User,
-				Text: session.Prompt,
-			},
-		},
+		Messages:          []data.Message{},
 	}
 	newResponsesSlice = append(newResponsesSlice, newResponse)
 

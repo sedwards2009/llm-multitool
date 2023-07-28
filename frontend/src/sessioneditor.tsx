@@ -1,24 +1,26 @@
 import { ChangeEvent, KeyboardEventHandler, useEffect, useState } from "react";
-import { ModelOverview, Session } from "./data";
+import { ModelOverview, Session, TemplateOverview } from "./data";
 import { navigate } from "raviger";
 import TextareaAutosize from "react-textarea-autosize";
 import { loadSession, newResponse, setSessionPrompt, deleteResponse, SessionMonitor, SessionMonitorState,
-  setSessionModel, newMessage } from "./dataloading";
+  setSessionModel, newMessage, setSessionTemplate } from "./dataloading";
 import { ResponseEditor } from "./responseeditor";
 import { ModelSettings } from "./modelsettings";
 
 export interface Props {
   sessionId: string;
   modelOverview: ModelOverview;
+  templateOverview: TemplateOverview;
   onSessionDelete: () => void;
 }
 
-export function SessionEditor({sessionId, modelOverview, onSessionDelete}: Props): JSX.Element {
+export function SessionEditor({sessionId, modelOverview, templateOverview, onSessionDelete}: Props): JSX.Element {
   const [session, setSession] = useState<Session | null>(null);
   const [sessionReload, setSessionReload] = useState<number>(0);
   const [sessionMonitor, setSessionMonitor] = useState<SessionMonitor | null>(null);
   const [sessionMonitorState, setSessionMonitorState] = useState<SessionMonitorState>(SessionMonitorState.IDLE);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
 
   const loadSessionData = async () => {
     const loadedSession = await loadSession(sessionId);
@@ -28,6 +30,7 @@ export function SessionEditor({sessionId, modelOverview, onSessionDelete}: Props
     setSession(loadedSession);
     if (loadedSession != null) {
       setSelectedModelId(loadedSession?.modelSettings.modelId);
+      setSelectedTemplateId(loadedSession?.modelSettings.templateId);
     }
   };
 
@@ -69,6 +72,11 @@ export function SessionEditor({sessionId, modelOverview, onSessionDelete}: Props
     setSession(setSessionModel(session as Session, modelId));
   };
 
+  const onTemplateChange = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    setSession(setSessionTemplate(session as Session, templateId));
+  };
+
   const onDeleteClicked = (responseId: string) => {
     (async () => {
       await deleteResponse((session as Session).id, responseId);
@@ -107,8 +115,11 @@ export function SessionEditor({sessionId, modelOverview, onSessionDelete}: Props
 
           <ModelSettings
             modelOverview={modelOverview}
+            templateOverview={templateOverview}
             selectedModelId={selectedModelId}
             setSelectedModelId={onModelChange}
+            selectedTemplateId={selectedTemplateId}
+            setSelectedTemplateId={onTemplateChange}
           />
           <h3>Prompt</h3>
           <div className="controls">

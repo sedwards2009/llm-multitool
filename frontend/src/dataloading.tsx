@@ -1,5 +1,5 @@
 import * as _ from "lodash";
-import { ModelOverview, ModelSettings, Session, SessionOverview } from "./data";
+import { ModelOverview, ModelSettings, Session, SessionOverview, TemplateOverview } from "./data";
 
 export interface LoaderResult {
   sessionOverview: SessionOverview;
@@ -29,6 +29,18 @@ export async function loadSessionOverview(): Promise<SessionOverview> {
     console.error("Could not parse JSON", error);
     return {
       sessionSummaries: []
+    };
+  }
+}
+
+export async function loadTemplateOverview(): Promise<TemplateOverview> {
+  const response = await fetch(`${SERVER_BASE_URL}/template`);
+  try {
+    return await response.json();
+  } catch (error) {
+    console.error("Could not parse JSON", error);
+    return {
+      templates: []
     };
   }
 }
@@ -100,6 +112,12 @@ async function flushQueues(): Promise<void> {
 
 export function setSessionModel(session: Session, modelId: string): Session {
   const newModelSettings: ModelSettings = {...session.modelSettings, modelId };
+  putSessionProperty(session.id, "modelSettings", newModelSettings);
+  return {...session, modelSettings: newModelSettings};
+}
+
+export function setSessionTemplate(session: Session, templateId: string): Session {
+  const newModelSettings: ModelSettings = {...session.modelSettings, templateId: templateId };
   putSessionProperty(session.id, "modelSettings", newModelSettings);
   return {...session, modelSettings: newModelSettings};
 }

@@ -12,6 +12,7 @@ import (
 	"sedwards2009/llm-workbench/internal/data/role"
 	"sedwards2009/llm-workbench/internal/engine"
 	"sedwards2009/llm-workbench/internal/storage"
+	"sedwards2009/llm-workbench/internal/template"
 
 	"github.com/bobg/go-generics/v2/slices"
 	"github.com/gin-contrib/cors"
@@ -24,6 +25,7 @@ var logger gin.HandlerFunc = nil
 var sessionStorage *storage.ConcurrentSessionStorage = nil
 var llmEngine *engine.Engine = nil
 var sessionBroadcaster *broadcaster.Broadcaster = nil
+var templates *template.Templates = nil
 
 func setupStorage() {
 	sessionStorage = storage.NewConcurrentSessionStorage("/home/sbe/devel/llm-workbench/data")
@@ -31,6 +33,10 @@ func setupStorage() {
 
 func setupEngine() {
 	llmEngine = engine.NewEngine()
+}
+
+func setupTemplates() {
+	templates = template.NewTemplates()
 }
 
 func setupBroadcaster() {
@@ -64,6 +70,7 @@ func setupRouter() *gin.Engine {
 	r.GET("/model", handleModelOverviewGet)
 	r.PUT("/session/:sessionId/modelSettings", handleSessionModelSettingsPut)
 	r.POST("/session/:sessionId/response/:responseId/message", handleMessagePost)
+	r.GET("/template", handleTemplateOverviewGet)
 
 	return r
 }
@@ -233,9 +240,14 @@ func handleResponsePost(c *gin.Context) {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("Error occured while creating new response: %v", err))
 		return
 	}
-
 	responseId := response.ID
+
+	formattedPrompt := templates.ApplyTemplate(session.ModelSettings.TemplateID, session.Prompt)
+	sessionStorage.AppendMessage(sessionId, responseId, role.User, formattedPrompt)
 	sessionStorage.AppendMessage(sessionId, responseId, role.Assistant, "")
+
+	session = sessionStorage.ReadSession(sessionId)
+	response = getResponseFromSessionByID(session, responseId)
 
 	appendFunc := func(text string) {
 		sessionStorage.AppendToLastMessage(sessionId, responseId, text)
@@ -351,6 +363,22 @@ func handleMessagePost(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+func handleTemplateOverviewGet(c *gin.Context) {
+	templateOverview := templates.TemplateOverview()
+	c.JSON(http.StatusOK, templateOverview)
+}
+
+func getResponseFromSessionByID(session *data.Session, responseID string) *data.Response {
+	responseIndex := slices.IndexFunc(session.Responses, func(r *data.Response) bool {
+		return responseID == r.ID
+	})
+	if responseIndex == -1 {
+		return nil
+	}
+
+	return session.Responses[responseIndex]
+}
+
 func main() {
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -361,6 +389,7 @@ func main() {
 	setupStorage()
 	setupEngine()
 	setupBroadcaster()
+	setupTemplates()
 	r := setupRouter()
 	r.Run(":8080")
 }

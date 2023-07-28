@@ -14,6 +14,7 @@
 
   & > .session-tab {
     padding: $panel-body-padding;
+    flex-grow: 1;
   }
 }
 
