@@ -2,6 +2,8 @@ import { useRoutes } from "raviger";
 import { ModelOverview, SessionOverview, TemplateOverview } from "./data";
 import { EmptyHome } from "./emptyhome";
 import { Home } from "./home";
+import { SettingsPage } from "./settingspage";
+import { TitleBar } from "./titlebar";
 
 export interface Props {
   modelOverview: ModelOverview;
@@ -13,19 +15,31 @@ export interface Props {
 export function MainApp({ modelOverview, sessionOverview, templateOverview, onSessionChange }: Props): JSX.Element {
   return (
     <>
-      <h1>LLM Workbench</h1>
       {
         useRoutes(
           {
-            '/': () => <EmptyHome sessionOverview={sessionOverview} onSessionChange={onSessionChange}/>,
+            '/': () => {
+              return <>
+                <TitleBar />
+                <EmptyHome sessionOverview={sessionOverview} onSessionChange={onSessionChange}/>
+              </>;
+            },
             '/session/:sessionId': ({ sessionId }: { sessionId: any }) => {
-              return <Home
+              return <>
+                <TitleBar />
+                <Home
+                  modelOverview={modelOverview}
+                  sessionOverview={sessionOverview}
+                  templateOverview={templateOverview}
+                  sessionId={sessionId}
+                  onSessionChange={onSessionChange}
+                />
+              </>;
+            },
+            '/settings': () => {
+              return <SettingsPage
                 modelOverview={modelOverview}
-                sessionOverview={sessionOverview}
-                templateOverview={templateOverview}
-                sessionId={sessionId}
-                onSessionChange={onSessionChange}
-              />;
+              />
             }
           }
         )
