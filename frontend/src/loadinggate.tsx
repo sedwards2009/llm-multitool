@@ -3,7 +3,7 @@ import { ModelOverview, SessionOverview, TemplateOverview } from "./data";
 import { loadModelOverview, loadSessionOverview, loadTemplateOverview } from "./dataloading";
 import { MainApp } from "./mainapp";
 
-export function App() {
+export function LoadingGate() {
   const [sessionOverview, setSessionOverview] = useState<SessionOverview | null>(null);
   const [modelOverview, setModelOverview] = useState<ModelOverview | null>(null);
   const [templateOverview, setTemplateOverview] = useState<TemplateOverview | null>(null);
