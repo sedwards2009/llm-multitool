@@ -7,12 +7,15 @@ import { TitleBar } from "./titlebar";
 
 export interface Props {
   modelOverview: ModelOverview;
+  rescanModels: () => Promise<void>;
   sessionOverview: SessionOverview;
   templateOverview: TemplateOverview;
   onSessionChange: () => void;
 }
 
-export function MainApp({ modelOverview, sessionOverview, templateOverview, onSessionChange }: Props): JSX.Element {
+export function MainApp({ modelOverview, sessionOverview, templateOverview, onSessionChange, rescanModels
+    }: Props): JSX.Element {
+
   return (
     <>
       {
@@ -39,6 +42,7 @@ export function MainApp({ modelOverview, sessionOverview, templateOverview, onSe
             '/settings': () => {
               return <SettingsPage
                 modelOverview={modelOverview}
+                rescanModels={rescanModels}
               />
             }
           }

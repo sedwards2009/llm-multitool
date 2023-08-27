@@ -143,7 +143,7 @@ export function SessionEditor({sessionId, modelOverview, templateOverview, onSes
         </div>
         <div className="session-response-pane">
           {
-            session.responses.map(r => <ResponseEditor
+            [...session.responses].reverse().map(r => <ResponseEditor
               response={r}
               key={r.id}
               onDeleteClicked={onDeleteClicked}

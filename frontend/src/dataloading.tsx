@@ -21,6 +21,20 @@ export async function loadModelOverview(): Promise<ModelOverview> {
   }
 }
 
+export async function scanModels(): Promise<ModelOverview> {
+  const response = await fetch(`${SERVER_BASE_URL}/model/scan`, {
+    method: "POST"
+  });
+  try {
+    return await response.json();
+  } catch (error) {
+    console.error("Could not parse JSON", error);
+    return {
+      models: []
+    };
+  }
+}
+
 export async function loadSessionOverview(): Promise<SessionOverview> {
   const response = await fetch(`${SERVER_BASE_URL}/session`);
   try {

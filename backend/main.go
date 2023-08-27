@@ -68,6 +68,7 @@ func setupRouter() *gin.Engine {
 	r.GET("/session/:sessionId/changes", handleSessionChangesGet)
 	r.DELETE("/session/:sessionId/response/:responseId", handleResponseDelete)
 	r.GET("/model", handleModelOverviewGet)
+	r.POST("/model/scan", handleModelScanPost)
 	r.PUT("/session/:sessionId/modelSettings", handleSessionModelSettingsPut)
 	r.POST("/session/:sessionId/response/:responseId/message", handleMessagePost)
 	r.GET("/template", handleTemplateOverviewGet)
@@ -283,6 +284,11 @@ func handleResponseDelete(c *gin.Context) {
 func handleModelOverviewGet(c *gin.Context) {
 	modelOverview := llmEngine.ModelOverview()
 	c.JSON(http.StatusOK, modelOverview)
+}
+
+func handleModelScanPost(c *gin.Context) {
+	llmEngine.ScanModels()
+	handleModelOverviewGet(c)
 }
 
 func handleSessionModelSettingsPut(c *gin.Context) {

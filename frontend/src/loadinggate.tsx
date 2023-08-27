@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ModelOverview, SessionOverview, TemplateOverview } from "./data";
-import { loadModelOverview, loadSessionOverview, loadTemplateOverview } from "./dataloading";
+import { loadModelOverview, loadSessionOverview, loadTemplateOverview, scanModels } from "./dataloading";
 import { MainApp } from "./mainapp";
 
 export function LoadingGate() {
@@ -28,6 +28,11 @@ export function LoadingGate() {
     })();
   };
 
+  const rescanModels = async () => {
+    const overview = await scanModels();
+    setModelOverview(overview);
+  };
+
   useEffect(() => {
     (async () => {
       await loadModelOverviewData();
@@ -44,6 +49,7 @@ export function LoadingGate() {
 
   return <MainApp
     modelOverview={modelOverview}
+    rescanModels={rescanModels}
     sessionOverview={sessionOverview}
     templateOverview={templateOverview}
     onSessionChange={onSessionChange}

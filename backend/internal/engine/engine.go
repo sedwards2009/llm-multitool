@@ -24,6 +24,7 @@ type messageType uint8
 const (
 	messageType_Enqueue messageType = iota
 	messageType_ListModels
+	messageType_ScanModels
 )
 
 type message struct {
@@ -33,6 +34,10 @@ type message struct {
 
 type listModelsPayload struct {
 	out chan *data.ModelOverview
+}
+
+type scanModelsPayload struct {
+	wait chan bool
 }
 
 func NewEngine() *Engine {
@@ -76,6 +81,10 @@ func (this *Engine) worker(in chan *message) {
 				payload.out <- &data.ModelOverview{
 					Models: this.models[:],
 				}
+			case messageType_ScanModels:
+				payload := message.payload.(*scanModelsPayload)
+				this.scanModels()
+				payload.wait <- true
 			}
 
 		case <-this.engineDoneChan:
@@ -187,4 +196,13 @@ func (this *Engine) validateModelID(modelID string) bool {
 		}
 	}
 	return false
+}
+
+func (this *Engine) ScanModels() {
+	returnChannel := make(chan bool)
+	this.toWorkerChan <- &message{
+		messageType: messageType_ScanModels,
+		payload:     &scanModelsPayload{wait: returnChannel},
+	}
+	<-returnChannel
 }
