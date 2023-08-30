@@ -70,7 +70,8 @@ func setupRouter() *gin.Engine {
 	r.GET("/model", handleModelOverviewGet)
 	r.POST("/model/scan", handleModelScanPost)
 	r.PUT("/session/:sessionId/modelSettings", handleSessionModelSettingsPut)
-	r.POST("/session/:sessionId/response/:responseId/message", handleMessagePost)
+	r.POST("/session/:sessionId/response/:responseId/message", handleNewMessagePost)
+	r.POST("/session/:sessionId/response/:responseId/continue", handleMessageContinuePost)
 	r.GET("/template", handleTemplateOverviewGet)
 
 	return r
@@ -228,6 +229,7 @@ func handleSessionPromptPut(c *gin.Context) {
 	c.JSON(http.StatusOK, session)
 }
 
+// Trigger the generation of a new response in a session.
 func handleResponsePost(c *gin.Context) {
 	sessionId := c.Params.ByName("sessionId")
 	session := sessionStorage.ReadSession(sessionId)
@@ -281,6 +283,39 @@ func handleResponseDelete(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+func handleMessageContinuePost(c *gin.Context) {
+	sessionId := c.Params.ByName("sessionId")
+	session := sessionStorage.ReadSession(sessionId)
+	if session == nil {
+		c.String(http.StatusNotFound, "Session not found")
+		return
+	}
+
+	responseId := c.Params.ByName("responseId")
+	response := getResponseFromSessionByID(session, responseId)
+	if response == nil {
+		c.String(http.StatusNotFound, "Response not found")
+		return
+	}
+
+	appendFunc := func(text string) {
+		sessionStorage.AppendToLastMessage(sessionId, responseId, text)
+		sessionBroadcaster.Send(sessionId, "changed")
+	}
+
+	completeFunc := func() {
+		sessionBroadcaster.Send(sessionId, "changed")
+	}
+
+	setStatusFunc := func(status responsestatus.ResponseStatus) {
+		sessionStorage.SetResponseStatus(sessionId, responseId, status)
+		sessionBroadcaster.Send(sessionId, "changed")
+	}
+
+	llmEngine.Enqueue(response.Messages, appendFunc, completeFunc, setStatusFunc, session.ModelSettings)
+	c.JSON(http.StatusOK, response)
+}
+
 func handleModelOverviewGet(c *gin.Context) {
 	modelOverview := llmEngine.ModelOverview()
 	c.JSON(http.StatusOK, modelOverview)
@@ -316,7 +351,7 @@ func handleSessionModelSettingsPut(c *gin.Context) {
 	c.JSON(http.StatusOK, session)
 }
 
-func handleMessagePost(c *gin.Context) {
+func handleNewMessagePost(c *gin.Context) {
 	sessionId := c.Params.ByName("sessionId")
 	session := sessionStorage.ReadSession(sessionId)
 	if session == nil {

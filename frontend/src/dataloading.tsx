@@ -175,6 +175,23 @@ export async function newMessage(session: Session, responseId: string, reply: st
   }
 }
 
+export async function continueMessage(session: Session, responseId: string): Promise<void> {
+  await flushQueues();
+
+  const response = await fetch(`${SERVER_BASE_URL}/session/${session.id}/response/${responseId}/continue`,
+    {
+      headers: {"Content-Type": "application/json"},
+      method: "POST"
+    });
+  try {
+    if (response.ok) {
+      return;
+    }
+  } catch (error) {
+    console.error("Could not parse JSON", error);
+  }
+}
+
 export enum SessionMonitorState {
   IDLE,
   CONNECTING,

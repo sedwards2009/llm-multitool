@@ -3,7 +3,7 @@ import { ModelOverview, Session, TemplateOverview } from "./data";
 import { navigate } from "raviger";
 import TextareaAutosize from "react-textarea-autosize";
 import { loadSession, newResponse, setSessionPrompt, deleteResponse, SessionMonitor, SessionMonitorState,
-  setSessionModel, newMessage, setSessionTemplate } from "./dataloading";
+  setSessionModel, newMessage, setSessionTemplate, continueMessage } from "./dataloading";
 import { ResponseEditor } from "./responseeditor";
 import { ModelSettings } from "./modelsettings";
 
@@ -98,9 +98,16 @@ export function SessionEditor({sessionId, modelOverview, templateOverview, onSes
     }
   };
 
-  const onReply = (responseId: string, reply: string) => {
+  const onReplySubmit = (responseId: string, reply: string) => {
     (async () => {
       await newMessage(session as Session, responseId, reply);
+      await loadSessionData();
+    })();
+  };
+
+  const onContinueClicked = (responseId: string) => {
+    (async () => {
+      await continueMessage(session as Session, responseId);
       await loadSessionData();
     })();
   };
@@ -146,8 +153,9 @@ export function SessionEditor({sessionId, modelOverview, templateOverview, onSes
             [...session.responses].reverse().map(r => <ResponseEditor
               response={r}
               key={r.id}
-              onDeleteClicked={onDeleteClicked}
-              onReply={text => onReply(r.id, text)}
+              onDeleteClicked={() => onDeleteClicked(r.id)}
+              onReplySubmit={text => onReplySubmit(r.id, text)}
+              onContinueClicked={() => onContinueClicked(r.id)}
             />)
           }
         </div>
