@@ -5,10 +5,10 @@ import (
 	"errors"
 	"io"
 	"log"
-	"os"
 	"sedwards2009/llm-workbench/internal/data"
 	"sedwards2009/llm-workbench/internal/data/responsestatus"
 	"sedwards2009/llm-workbench/internal/data/role"
+	"sedwards2009/llm-workbench/internal/engine/config"
 	"sedwards2009/llm-workbench/internal/engine/types"
 
 	"github.com/bobg/go-generics/v2/slices"
@@ -18,19 +18,37 @@ import (
 
 const ENGINE_NAME = "openai"
 
-func NewEngineBackend() types.EngineBackend {
-	return types.EngineBackend{
-		ID:         ENGINE_NAME,
-		ScanModels: scanModels,
-		Process:    process,
+type OpenAiEngineBackend struct {
+	id     string
+	config *config.EngineBackendConfig
+}
+
+func NewEngineBackend(config *config.EngineBackendConfig) OpenAiEngineBackend {
+	return OpenAiEngineBackend{
+		id:     ENGINE_NAME,
+		config: config,
 	}
 }
 
-func process(work *types.Request, model *data.Model) {
+func (this *OpenAiEngineBackend) formatApiConfig() openai.ClientConfig {
+	apiConfig := openai.DefaultConfig(this.config.ApiToken)
+	if this.config.Address != nil {
+		apiConfig.BaseURL = *this.config.Address
+	}
+	apiConfig.APIType = openai.APITypeOpenAI
+	apiConfig.OrgID = ""
+	return apiConfig
+}
+
+func (this OpenAiEngineBackend) ID() string {
+	return this.id
+}
+
+func (this OpenAiEngineBackend) Process(work *types.Request, model *data.Model) {
 	log.Printf("processOpenAI(): Starting request")
 	work.SetStatusFunc(responsestatus.Running)
 
-	c := openai.NewClient(os.Getenv("OPENAI_TOKEN"))
+	c := openai.NewClientWithConfig(this.formatApiConfig())
 	ctx := context.Background()
 
 	req := openai.ChatCompletionRequest{
@@ -74,7 +92,7 @@ func process(work *types.Request, model *data.Model) {
 	work.CompleteFunc()
 }
 
-func scanModels() []*data.Model {
+func (this OpenAiEngineBackend) ScanModels() []*data.Model {
 	return []*data.Model{
 		{
 			ID:              "openai.com_chatgpt3.5turbo",

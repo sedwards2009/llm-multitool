@@ -1,22 +1,8 @@
 package oobabooga
 
-import (
-	"context"
-	"errors"
-	"io"
-	"log"
-	"sedwards2009/llm-workbench/internal/data"
-	"sedwards2009/llm-workbench/internal/data/responsestatus"
-	"sedwards2009/llm-workbench/internal/data/role"
-	"sedwards2009/llm-workbench/internal/engine/types"
-
-	"github.com/bobg/go-generics/v2/slices"
-
-	openai "github.com/sashabaranov/go-openai"
-)
-
 const ENGINE_NAME = "oobabooga"
 
+/*
 func NewEngineBackend() types.EngineBackend {
 	return types.EngineBackend{
 		ID:         ENGINE_NAME,
@@ -29,21 +15,34 @@ func process(work *types.Request, model *data.Model) {
 	log.Printf("Process Oobabooga(): Starting request")
 	work.SetStatusFunc(responsestatus.Running)
 
-	c := openai.NewClientWithConfig(config())
+	c := openai.NewClientWithConfig(formatApiConfig())
 	ctx := context.Background()
 
 	req := openai.ChatCompletionRequest{
 		Model:     model.InternalModelID,
 		MaxTokens: 200,
 		Messages: slices.Map(work.Messages, func(m data.Message) openai.ChatCompletionMessage {
-			openaiRole := openai.ChatMessageRoleUser
+
 			if m.Role == role.Assistant {
-				openaiRole = openai.ChatMessageRoleAssistant
+				return openai.ChatCompletionMessage{
+					Role:    openai.ChatMessageRoleAssistant,
+					Content: fmt.Sprintf("### Response:\n\n%s\n", m.Text),
+				}
+			} else {
+				return openai.ChatCompletionMessage{
+					Role:    openai.ChatMessageRoleUser,
+					Content: fmt.Sprintf("### Instruction:\n\n%s\n", m.Text),
+				}
 			}
-			return openai.ChatCompletionMessage{
-				Role:    openaiRole,
-				Content: m.Text,
-			}
+
+			// openaiRole := openai.ChatMessageRoleUser
+			// if m.Role == role.Assistant {
+			// 	openaiRole = openai.ChatMessageRoleAssistant
+			// }
+			// return openai.ChatCompletionMessage{
+			// 	Role:    openaiRole,
+			// 	Content: m.Text,
+			// }
 		}),
 		Stream: true,
 	}
@@ -73,7 +72,7 @@ func process(work *types.Request, model *data.Model) {
 	work.CompleteFunc()
 }
 
-func config() openai.ClientConfig {
+func formatApiConfig() openai.ClientConfig {
 	config := openai.DefaultConfig("")
 	config.BaseURL = "http://127.0.0.1:5001/v1"
 	config.APIType = openai.APITypeOpenAI
@@ -82,7 +81,7 @@ func config() openai.ClientConfig {
 }
 
 func scanModels() []*data.Model {
-	c := openai.NewClientWithConfig(config())
+	c := openai.NewClientWithConfig(formatApiConfig())
 	ctx := context.Background()
 
 	result := []*data.Model{}
@@ -109,3 +108,4 @@ func scanModels() []*data.Model {
 	}
 	return result
 }
+*/

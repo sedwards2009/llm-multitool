@@ -4,7 +4,7 @@ import (
 	"log"
 	"sedwards2009/llm-workbench/internal/data"
 	"sedwards2009/llm-workbench/internal/data/responsestatus"
-	"sedwards2009/llm-workbench/internal/engine/oobabooga"
+	"sedwards2009/llm-workbench/internal/engine/config"
 	"sedwards2009/llm-workbench/internal/engine/openai"
 	"sedwards2009/llm-workbench/internal/engine/types"
 )
@@ -40,7 +40,14 @@ type scanModelsPayload struct {
 	wait chan bool
 }
 
-func NewEngine() *Engine {
+func NewEngine(configFilePath string) *Engine {
+
+	backendConfigs, err := config.ReadConfigFile(configFilePath)
+	if err != nil {
+		log.Print(err)
+		backendConfigs = []*config.EngineBackendConfig{}
+	}
+
 	engine := &Engine{
 		toWorkerChan:      make(chan *message, 16),
 		workQueue:         make([]*types.Request, 0),
@@ -50,9 +57,10 @@ func NewEngine() *Engine {
 		models:            make([]*data.Model, 0),
 	}
 
-	engine.engineBackends = []types.EngineBackend{
-		openai.NewEngineBackend(),
-		oobabooga.NewEngineBackend(),
+	engine.engineBackends = []types.EngineBackend{}
+	for _, config := range backendConfigs {
+		backendInstance := openai.NewEngineBackend(config)
+		engine.engineBackends = append(engine.engineBackends, backendInstance)
 	}
 
 	go engine.worker(engine.toWorkerChan)
@@ -129,7 +137,7 @@ func (this *Engine) processWork(work *types.Request, done chan bool) {
 		return
 	}
 
-	backend.Process(work, model)
+	(*backend).Process(work, model)
 }
 
 func (this *Engine) getModelByID(modelID string) *data.Model {
@@ -143,7 +151,7 @@ func (this *Engine) getModelByID(modelID string) *data.Model {
 
 func (this *Engine) getBackendByID(backendID string) *types.EngineBackend {
 	for _, backend := range this.engineBackends {
-		if backend.ID == backendID {
+		if backend.ID() == backendID {
 			return &backend
 		}
 	}

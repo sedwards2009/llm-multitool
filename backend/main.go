@@ -32,7 +32,7 @@ func setupStorage() {
 }
 
 func setupEngine() {
-	llmEngine = engine.NewEngine()
+	llmEngine = engine.NewEngine("/home/sbe/devel/llm-workbench/backend.yaml")
 }
 
 func setupTemplates() {
