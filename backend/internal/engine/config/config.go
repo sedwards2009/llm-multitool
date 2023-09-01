@@ -14,6 +14,7 @@ type EngineBackendConfig struct {
 	Address      *string `yaml:"address"`
 	ApiTokenFrom *string `yaml:"api_token_from"`
 	ApiToken     string
+	Models       *[]string `yaml:"models"`
 }
 
 func ReadConfigFile(file string) ([]*EngineBackendConfig, error) {

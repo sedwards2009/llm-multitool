@@ -16,8 +16,6 @@ import (
 	openai "github.com/sashabaranov/go-openai"
 )
 
-const ENGINE_NAME = "openai"
-
 type OpenAiEngineBackend struct {
 	id     string
 	config *config.EngineBackendConfig
@@ -25,7 +23,7 @@ type OpenAiEngineBackend struct {
 
 func NewEngineBackend(config *config.EngineBackendConfig) OpenAiEngineBackend {
 	return OpenAiEngineBackend{
-		id:     ENGINE_NAME,
+		id:     config.Name,
 		config: config,
 	}
 }
@@ -93,18 +91,44 @@ func (this OpenAiEngineBackend) Process(work *types.Request, model *data.Model) 
 }
 
 func (this OpenAiEngineBackend) ScanModels() []*data.Model {
-	return []*data.Model{
-		{
-			ID:              "openai.com_chatgpt3.5turbo",
-			Name:            "OpenAI - ChatGPT 3.5 Turbo",
-			Engine:          ENGINE_NAME,
-			InternalModelID: openai.GPT3Dot5Turbo,
-		},
-		{
-			ID:              "openai.com_gpt4",
-			Name:            "OpenAI - GPT 4",
-			Engine:          ENGINE_NAME,
-			InternalModelID: openai.GPT4,
-		},
+	c := openai.NewClientWithConfig(this.formatApiConfig())
+	ctx := context.Background()
+
+	result := []*data.Model{}
+
+	modelList, err := c.ListModels(ctx)
+	if err != nil {
+		log.Printf("ScanModels: Error: %v\n", err)
+		return []*data.Model{}
 	}
+
+	models := make(map[string]bool)
+	isFilterModels := this.config.Models != nil
+	if isFilterModels {
+		for _, model := range *this.config.Models {
+			models[model] = true
+		}
+	}
+
+	for _, modelInfo := range modelList.Models {
+		if modelInfo.Object != "model" {
+			continue
+		}
+
+		_, hasModels := models[modelInfo.ID]
+		if isFilterModels && !hasModels {
+			continue
+		}
+
+		result = append(result, &data.Model{
+			ID:              this.id + "_" + modelInfo.ID,
+			Name:            this.id + " - " + modelInfo.ID,
+			Engine:          this.id,
+			InternalModelID: modelInfo.ID,
+		})
+		// break
+		// We only take the first one because Oobabooga doesn't
+		// support loading different models on the fly.
+	}
+	return result
 }
