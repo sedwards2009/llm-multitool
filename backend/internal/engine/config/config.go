@@ -9,12 +9,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const VARIANT_OOBABOOGA = "oobabooga"
+
 type EngineBackendConfig struct {
 	Name         string  `yaml:"name"`
 	Address      *string `yaml:"address"`
 	ApiTokenFrom *string `yaml:"api_token_from"`
 	ApiToken     string
 	Models       *[]string `yaml:"models"`
+	Variant      *string   `yaml:"variant"`
 }
 
 func ReadConfigFile(file string) ([]*EngineBackendConfig, error) {
@@ -27,8 +30,20 @@ func ReadConfigFile(file string) ([]*EngineBackendConfig, error) {
 		return nil, fmt.Errorf("cannot unmarshal config file: %w", err)
 	}
 
+	checkVariantFields(backendConfigs)
 	loadApiTokens(backendConfigs, path.Dir(file))
 	return *backendConfigs, nil
+}
+
+func checkVariantFields(backendConfigs *[]*EngineBackendConfig) {
+	for _, config := range *backendConfigs {
+		if config.Variant != nil {
+			if *config.Variant != VARIANT_OOBABOOGA {
+				fmt.Printf("Error reading backend config file. Found unknown variant '%s'.\n", *config.Variant)
+				config.Variant = nil
+			}
+		}
+	}
 }
 
 func loadApiTokens(backendConfigs *[]*EngineBackendConfig, basePath string) {

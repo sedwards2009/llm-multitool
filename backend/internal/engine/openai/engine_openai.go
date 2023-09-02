@@ -126,9 +126,12 @@ func (this OpenAiEngineBackend) ScanModels() []*data.Model {
 			Engine:          this.id,
 			InternalModelID: modelInfo.ID,
 		})
-		// break
-		// We only take the first one because Oobabooga doesn't
-		// support loading different models on the fly.
+
+		if this.config.Variant != nil && *this.config.Variant == config.VARIANT_OOBABOOGA {
+			// We only take the first one because Oobabooga doesn't
+			// support loading different models on the fly.
+			break
+		}
 	}
 	return result
 }
