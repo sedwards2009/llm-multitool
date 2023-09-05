@@ -229,7 +229,7 @@ func handleSessionPromptPut(c *gin.Context) {
 	c.JSON(http.StatusOK, session)
 }
 
-// Trigger the generation of a new response in a session.
+// Trigger the generation of a new response in a session used the current model and prompt.
 func handleResponsePost(c *gin.Context) {
 	sessionId := c.Params.ByName("sessionId")
 	session := sessionStorage.ReadSession(sessionId)
@@ -237,6 +237,9 @@ func handleResponsePost(c *gin.Context) {
 		c.String(http.StatusNotFound, "Session not found")
 		return
 	}
+
+	session.Title = templates.MakeTitle(session.ModelSettings.TemplateID, session.Prompt)
+	sessionStorage.WriteSession(session)
 
 	response, err := sessionStorage.NewResponse(sessionId)
 	if err != nil {

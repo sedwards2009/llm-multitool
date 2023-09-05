@@ -1,6 +1,7 @@
 package template
 
 import (
+	"fmt"
 	"sedwards2009/llm-workbench/internal/data"
 	"strings"
 
@@ -12,6 +13,8 @@ type Templates struct {
 }
 
 const PROMPT_PARAM = "{{prompt}}"
+
+const TITLE_LENGTH = 40
 
 func NewTemplates() *Templates {
 	return &Templates{
@@ -53,11 +56,35 @@ func (this *Templates) TemplateOverview() *data.TemplateOverview {
 }
 
 func (this *Templates) ApplyTemplate(templateID string, promptText string) string {
+	template := this.getTemplateByID(templateID)
+	if template == nil {
+		return promptText
+	}
+
+	return strings.Replace(template.TemplateString, "{{prompt}}", promptText, -1)
+}
+
+func (this *Templates) getTemplateByID(templateID string) *data.Template {
 	matches := slices.Filter(this.templates, func(t *data.Template) bool {
 		return t.ID == templateID
 	})
 	if len(matches) == 0 {
-		return promptText
+		return nil
 	}
-	return strings.Replace(matches[0].TemplateString, "{{prompt}}", promptText, -1)
+	return matches[0]
+}
+
+func (this *Templates) MakeTitle(templateID string, promptText string) string {
+	lines := strings.Split(promptText, "\n")
+	firstLine := lines[0]
+	if len(firstLine) > TITLE_LENGTH {
+		firstLine = lines[0][:TITLE_LENGTH]
+	}
+
+	template := this.getTemplateByID(templateID)
+	if template == nil {
+		return firstLine
+	}
+
+	return fmt.Sprintf("%s - %s", template.Name, firstLine)
 }

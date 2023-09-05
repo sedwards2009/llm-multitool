@@ -190,8 +190,9 @@ func (this *SessionStorage) sessionSummary(session *data.Session) *data.SessionS
 	}
 
 	newSummary := &data.SessionSummary{
-		ID:    session.ID,
-		Title: session.Title,
+		ID:                session.ID,
+		Title:             session.Title,
+		CreationTimestamp: session.CreationTimestamp,
 	}
 	this.sessionSummaries[session.ID] = newSummary
 	return newSummary

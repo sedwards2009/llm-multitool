@@ -12,9 +12,12 @@ export interface Props {
   modelOverview: ModelOverview;
   templateOverview: TemplateOverview;
   onSessionDelete: () => void;
+  onSessionChange: ()=> void;
 }
 
-export function SessionEditor({sessionId, modelOverview, templateOverview, onSessionDelete}: Props): JSX.Element {
+export function SessionEditor({sessionId, modelOverview, templateOverview, onSessionDelete, onSessionChange
+    }: Props): JSX.Element {
+
   const [session, setSession] = useState<Session | null>(null);
   const [sessionReload, setSessionReload] = useState<number>(0);
   const [sessionMonitor, setSessionMonitor] = useState<SessionMonitor | null>(null);
@@ -88,6 +91,7 @@ export function SessionEditor({sessionId, modelOverview, templateOverview, onSes
     (async () => {
       await newResponse(session as Session);
       await loadSessionData();
+      onSessionChange();
     })();
   };
 

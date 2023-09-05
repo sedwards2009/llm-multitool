@@ -56,6 +56,10 @@ UL.tabs {
     width: $tab-max-width;
     max-width: $tab-max-width;
 
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+
     &.active {
       color: $tab-text-color-active;
       background-color: $tab-background-color-active;

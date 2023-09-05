@@ -39,6 +39,7 @@ export function Home({ modelOverview, sessionOverview, templateOverview, session
           modelOverview={modelOverview}
           templateOverview={templateOverview}
           onSessionDelete={onSessionDelete}
+          onSessionChange={onSessionChange}
         />
       </div>
   </div>
