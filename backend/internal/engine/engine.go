@@ -7,6 +7,7 @@ import (
 	"sedwards2009/llm-workbench/internal/engine/config"
 	"sedwards2009/llm-workbench/internal/engine/openai"
 	"sedwards2009/llm-workbench/internal/engine/types"
+	"sedwards2009/llm-workbench/internal/presets"
 )
 
 type Engine struct {
@@ -17,6 +18,7 @@ type Engine struct {
 	computeWorkerChan chan *types.Request
 	models            []*data.Model
 	engineBackends    []types.EngineBackend
+	presetDatabase    *presets.PresetDatabase
 }
 
 type messageType uint8
@@ -40,7 +42,7 @@ type scanModelsPayload struct {
 	wait chan bool
 }
 
-func NewEngine(configFilePath string) *Engine {
+func NewEngine(configFilePath string, presetDatabase *presets.PresetDatabase) *Engine {
 
 	backendConfigs, err := config.ReadConfigFile(configFilePath)
 	if err != nil {
@@ -55,6 +57,7 @@ func NewEngine(configFilePath string) *Engine {
 		isComputing:       false,
 		computeWorkerChan: make(chan *types.Request, 2),
 		models:            make([]*data.Model, 0),
+		presetDatabase:    presetDatabase,
 	}
 
 	engine.engineBackends = []types.EngineBackend{}
@@ -137,7 +140,8 @@ func (this *Engine) processWork(work *types.Request, done chan bool) {
 		return
 	}
 
-	(*backend).Process(work, model)
+	preset := this.getPresetByID(work.ModelSettings.PresetID)
+	(*backend).Process(work, model, preset)
 }
 
 func (this *Engine) getModelByID(modelID string) *data.Model {
@@ -156,6 +160,19 @@ func (this *Engine) getBackendByID(backendID string) *types.EngineBackend {
 		}
 	}
 	return nil
+}
+
+func (this *Engine) getPresetByID(presetID string) *data.Preset {
+	preset := this.presetDatabase.Get(presetID)
+	if preset == nil {
+		return &data.Preset{
+			ID:          "default",
+			Name:        "default",
+			Temperature: 0.7,
+			TopP:        0.7,
+		}
+	}
+	return preset
 }
 
 func (this *Engine) scanModels() {

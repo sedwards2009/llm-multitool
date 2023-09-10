@@ -31,6 +31,7 @@ type Session struct {
 type ModelSettings struct {
 	ModelID    string `json:"modelId"`
 	TemplateID string `json:"templateId"`
+	PresetID   string `json:"presetId"`
 }
 
 type ModelOverview struct {
@@ -65,4 +66,15 @@ type Template struct {
 
 type TemplateOverview struct {
 	Templates []*Template `json:"templates"`
+}
+
+type Preset struct {
+	ID          string  `json:"id" yaml:"id"`
+	Name        string  `json:"name" yaml:"name"`
+	Temperature float32 `yaml:"temperature"`
+	TopP        float32 `yaml:"top_p"`
+}
+
+type PresetOverview struct {
+	Presets []*Preset `json:"presets"`
 }

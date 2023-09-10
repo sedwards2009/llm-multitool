@@ -42,7 +42,7 @@ func (this OpenAiEngineBackend) ID() string {
 	return this.id
 }
 
-func (this OpenAiEngineBackend) Process(work *types.Request, model *data.Model) {
+func (this OpenAiEngineBackend) Process(work *types.Request, model *data.Model, preset *data.Preset) {
 	log.Printf("processOpenAI(): Starting request")
 	work.SetStatusFunc(responsestatus.Running)
 
@@ -63,6 +63,9 @@ func (this OpenAiEngineBackend) Process(work *types.Request, model *data.Model) 
 			}
 		}),
 		Stream: true,
+
+		Temperature: preset.Temperature,
+		TopP:        preset.TopP,
 	}
 	stream, err := c.CreateChatCompletionStream(ctx, req)
 	if err != nil {

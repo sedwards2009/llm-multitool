@@ -1,5 +1,5 @@
 import * as _ from "lodash";
-import { ModelOverview, ModelSettings, Session, SessionOverview, TemplateOverview } from "./data";
+import { ModelOverview, ModelSettings, PresetOverview, Session, SessionOverview, TemplateOverview } from "./data";
 
 export interface LoaderResult {
   sessionOverview: SessionOverview;
@@ -43,6 +43,18 @@ export async function loadSessionOverview(): Promise<SessionOverview> {
     console.error("Could not parse JSON", error);
     return {
       sessionSummaries: []
+    };
+  }
+}
+
+export async function loadPresetOverview(): Promise<PresetOverview> {
+  const response = await fetch(`${SERVER_BASE_URL}/preset`);
+  try {
+    return await response.json();
+  } catch (error) {
+    console.error("Could not parse JSON", error);
+    return {
+      presets: []
     };
   }
 }
@@ -132,6 +144,12 @@ export function setSessionModel(session: Session, modelId: string): Session {
 
 export function setSessionTemplate(session: Session, templateId: string): Session {
   const newModelSettings: ModelSettings = {...session.modelSettings, templateId: templateId };
+  putSessionProperty(session.id, "modelSettings", newModelSettings);
+  return {...session, modelSettings: newModelSettings};
+}
+
+export function setSessionPreset(session: Session, presetId: string): Session {
+  const newModelSettings: ModelSettings = {...session.modelSettings, presetId: presetId };
   putSessionProperty(session.id, "modelSettings", newModelSettings);
   return {...session, modelSettings: newModelSettings};
 }

@@ -25,6 +25,7 @@ export interface Session {
 export interface ModelSettings {
   modelId: string;
   templateId: string;
+  presetId: string;
 }
 
 export type ResponseStatus = "Done" | "Pending" | "Running" | "Error";
@@ -60,4 +61,13 @@ export interface Template {
 
 export interface TemplateOverview {
   templates: Template[];
+}
+
+export interface Preset {
+  id: string;
+  name: string;
+}
+
+export interface PresetOverview {
+  presets: Preset[];
 }

@@ -1,22 +1,23 @@
 import { ChangeEvent, KeyboardEventHandler, useEffect, useState } from "react";
-import { ModelOverview, Session, TemplateOverview } from "./data";
+import { ModelOverview, PresetOverview, Session, TemplateOverview } from "./data";
 import { navigate } from "raviger";
 import TextareaAutosize from "react-textarea-autosize";
 import { loadSession, newResponse, setSessionPrompt, deleteResponse, SessionMonitor, SessionMonitorState,
-  setSessionModel, newMessage, setSessionTemplate, continueMessage } from "./dataloading";
+  setSessionModel, newMessage, setSessionTemplate, setSessionPreset, continueMessage } from "./dataloading";
 import { ResponseEditor } from "./responseeditor";
 import { ModelSettings } from "./modelsettings";
 
 export interface Props {
   sessionId: string;
   modelOverview: ModelOverview;
+  presetOverview: PresetOverview;
   templateOverview: TemplateOverview;
   onSessionDelete: () => void;
   onSessionChange: ()=> void;
 }
 
-export function SessionEditor({sessionId, modelOverview, templateOverview, onSessionDelete, onSessionChange
-    }: Props): JSX.Element {
+export function SessionEditor({sessionId, modelOverview, presetOverview, templateOverview, onSessionDelete,
+    onSessionChange}: Props): JSX.Element {
 
   const [session, setSession] = useState<Session | null>(null);
   const [sessionReload, setSessionReload] = useState<number>(0);
@@ -24,6 +25,7 @@ export function SessionEditor({sessionId, modelOverview, templateOverview, onSes
   const [sessionMonitorState, setSessionMonitorState] = useState<SessionMonitorState>(SessionMonitorState.IDLE);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
 
   const loadSessionData = async () => {
     const loadedSession = await loadSession(sessionId);
@@ -116,6 +118,11 @@ export function SessionEditor({sessionId, modelOverview, templateOverview, onSes
     })();
   };
 
+  const onPresetChange = (presetId: string) => {
+    setSelectedPresetId(presetId);
+    setSession(setSessionPreset(session as Session, presetId));
+  };
+
   return <div className="session-editor">
     {session == null && <div>Loading</div>}
     {session && <>
@@ -127,10 +134,13 @@ export function SessionEditor({sessionId, modelOverview, templateOverview, onSes
           <ModelSettings
             modelOverview={modelOverview}
             templateOverview={templateOverview}
+            presetOverview={presetOverview}
             selectedModelId={selectedModelId}
             setSelectedModelId={onModelChange}
             selectedTemplateId={selectedTemplateId}
             setSelectedTemplateId={onTemplateChange}
+            selectedPresetId={selectedPresetId}
+            setSelectedPresetId={onPresetChange}
           />
           <h3>Prompt</h3>
           <div className="controls">

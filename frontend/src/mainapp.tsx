@@ -1,5 +1,5 @@
 import { useRoutes } from "raviger";
-import { ModelOverview, SessionOverview, TemplateOverview } from "./data";
+import { ModelOverview, PresetOverview, SessionOverview, TemplateOverview } from "./data";
 import { EmptyHome } from "./emptyhome";
 import { Home } from "./home";
 import { SettingsPage } from "./settingspage";
@@ -8,13 +8,14 @@ import { TitleBar } from "./titlebar";
 export interface Props {
   modelOverview: ModelOverview;
   rescanModels: () => Promise<void>;
+  presetOverview: PresetOverview;
   sessionOverview: SessionOverview;
   templateOverview: TemplateOverview;
   onSessionChange: () => void;
 }
 
-export function MainApp({ modelOverview, sessionOverview, templateOverview, onSessionChange, rescanModels
-    }: Props): JSX.Element {
+export function MainApp({ modelOverview, presetOverview, sessionOverview, templateOverview, onSessionChange,
+  rescanModels }: Props): JSX.Element {
 
   return (
     <>
@@ -32,6 +33,7 @@ export function MainApp({ modelOverview, sessionOverview, templateOverview, onSe
                 <TitleBar />
                 <Home
                   modelOverview={modelOverview}
+                  presetOverview={presetOverview}
                   sessionOverview={sessionOverview}
                   templateOverview={templateOverview}
                   sessionId={sessionId}

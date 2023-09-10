@@ -11,6 +11,7 @@ import (
 	"sedwards2009/llm-workbench/internal/data/responsestatus"
 	"sedwards2009/llm-workbench/internal/data/role"
 	"sedwards2009/llm-workbench/internal/engine"
+	"sedwards2009/llm-workbench/internal/presets"
 	"sedwards2009/llm-workbench/internal/storage"
 	"sedwards2009/llm-workbench/internal/template"
 
@@ -24,6 +25,7 @@ import (
 var logger gin.HandlerFunc = nil
 var sessionStorage *storage.ConcurrentSessionStorage = nil
 var llmEngine *engine.Engine = nil
+var presetsDatabase *presets.PresetDatabase = nil
 var sessionBroadcaster *broadcaster.Broadcaster = nil
 var templates *template.Templates = nil
 
@@ -31,12 +33,16 @@ func setupStorage() {
 	sessionStorage = storage.NewConcurrentSessionStorage("/home/sbe/devel/llm-workbench/data")
 }
 
-func setupEngine() {
-	llmEngine = engine.NewEngine("/home/sbe/devel/llm-workbench/backend.yaml")
+func setupEngine(presetDatabase *presets.PresetDatabase) {
+	llmEngine = engine.NewEngine("/home/sbe/devel/llm-workbench/backend.yaml", presetDatabase)
 }
 
 func setupTemplates() {
 	templates = template.NewTemplates()
+}
+
+func setupPresets() {
+	presetsDatabase = presets.MakePresetDatabase("/home/sbe/devel/llm-workbench/presets.yaml")
 }
 
 func setupBroadcaster() {
@@ -73,6 +79,7 @@ func setupRouter() *gin.Engine {
 	r.POST("/session/:sessionId/response/:responseId/message", handleNewMessagePost)
 	r.POST("/session/:sessionId/response/:responseId/continue", handleMessageContinuePost)
 	r.GET("/template", handleTemplateOverviewGet)
+	r.GET("/preset", handlePresetOverviewGet)
 
 	return r
 }
@@ -344,7 +351,12 @@ func handleSessionModelSettingsPut(c *gin.Context) {
 	}
 
 	if !llmEngine.ValidateModelSettings(data) {
-		c.String(http.StatusBadRequest, "An invalid ModelSettings struct was ModelID was given in the PUT body.")
+		c.String(http.StatusBadRequest, "An invalid ModelID value was given in the PUT body.")
+		return
+	}
+
+	if !presetsDatabase.Exists(data.PresetID) {
+		c.String(http.StatusBadRequest, "An invalid PresetID was given in the PUT body.")
 		return
 	}
 
@@ -423,6 +435,11 @@ func getResponseFromSessionByID(session *data.Session, responseID string) *data.
 	return session.Responses[responseIndex]
 }
 
+func handlePresetOverviewGet(c *gin.Context) {
+	presetOverview := presetsDatabase.PresetOverview()
+	c.JSON(http.StatusOK, presetOverview)
+}
+
 func main() {
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -431,7 +448,8 @@ func main() {
 
 	// parsedArgs, errorString := argsparser.Parse(&os.Args)
 	setupStorage()
-	setupEngine()
+	setupPresets()
+	setupEngine(presetsDatabase)
 	setupBroadcaster()
 	setupTemplates()
 	r := setupRouter()
