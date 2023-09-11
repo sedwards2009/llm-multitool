@@ -62,6 +62,7 @@ type Template struct {
 	ID             string `json:"id"`
 	Name           string `json:"name"`
 	TemplateString string `json:"templateString"`
+	Default        bool
 }
 
 type TemplateOverview struct {

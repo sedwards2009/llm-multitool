@@ -132,6 +132,7 @@ export function SessionEditor({sessionId, modelOverview, presetOverview, templat
             <button className="microtool danger" onClick={onSessionDelete}><i className="fa fa-times"></i></button>
           </div>
 
+          <h3>Settings</h3>
           <ModelSettings
             modelOverview={modelOverview}
             templateOverview={templateOverview}

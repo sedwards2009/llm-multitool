@@ -16,7 +16,11 @@ export interface Props {
 export function ModelSettings({modelOverview, presetOverview, templateOverview, selectedModelId, setSelectedModelId,
     selectedTemplateId, setSelectedTemplateId, selectedPresetId, setSelectedPresetId}: Props): JSX.Element  {
 
-  return <div className="gui-layout cols-1-3">
+  const modelIDs: (string | null)[] = modelOverview.models.map(m => m.id);
+  const templateIDs: (string | null)[] = templateOverview.templates.map(t => t.id);
+  const presetIDs: (string | null)[] = presetOverview.presets.map(p => p.id);
+
+  return <div className="gui-layout cols-1-2">
     <div>
       <i className="fa fa-robot"></i>&nbsp;&nbsp;Model:
     </div>
@@ -24,7 +28,9 @@ export function ModelSettings({modelOverview, presetOverview, templateOverview, 
       <select
         value={selectedModelId == null ? undefined : selectedModelId}
         onChange={(e) => setSelectedModelId(e.target.value)}>
-          <option key={""} value="">(none)</option>
+        {
+          !modelIDs.includes(selectedModelId) && <option key={""} value="">(none)</option>
+        }
         {
           modelOverview.models.map(m => <option key={m.id} value={m.id}>{ m.name }</option>)
         }
@@ -37,7 +43,9 @@ export function ModelSettings({modelOverview, presetOverview, templateOverview, 
       <select
         value={selectedTemplateId == null ? undefined : selectedTemplateId}
         onChange={(e) => setSelectedTemplateId(e.target.value)}>
-          <option key={""} value="">(none)</option>
+        {
+          !templateIDs.includes(selectedTemplateId) && <option key={""} value="">(none)</option>
+        }
         {
           templateOverview.templates.map(t => <option key={t.id} value={t.id}>{ t.name }</option>)
         }
@@ -50,7 +58,9 @@ export function ModelSettings({modelOverview, presetOverview, templateOverview, 
       <select
         value={selectedPresetId == null ? undefined : selectedPresetId}
         onChange={(e) => setSelectedPresetId(e.target.value)}>
-          <option key={""} value="">(none)</option>
+        {
+          !presetIDs.includes(selectedPresetId) && <option key={""} value="">(none)</option>
+        }
         {
           presetOverview.presets.map(p => <option key={p.id} value={p.id}>{ p.name }</option>)
         }

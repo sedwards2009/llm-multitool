@@ -23,6 +23,7 @@ func NewTemplates() *Templates {
 				ID:             "9e8df77f-c9c8-4683-995f-d744376901b5",
 				Name:           "Instruct",
 				TemplateString: PROMPT_PARAM,
+				Default:        true,
 			},
 
 			{
@@ -53,6 +54,15 @@ func (this *Templates) TemplateOverview() *data.TemplateOverview {
 	return &data.TemplateOverview{
 		Templates: this.templates[:],
 	}
+}
+
+func (this *Templates) DefaultID() string {
+	for _, template := range this.templates {
+		if template.Default {
+			return template.ID
+		}
+	}
+	return ""
 }
 
 func (this *Templates) ApplyTemplate(templateID string, promptText string) string {

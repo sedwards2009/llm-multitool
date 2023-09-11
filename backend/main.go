@@ -192,11 +192,13 @@ func handleNewSession(c *gin.Context) {
 
 	session.ModelSettings.ModelID = llmEngine.DefaultID()
 	session.ModelSettings.PresetID = presetDatabase.DefaultID()
+	session.ModelSettings.TemplateID = templates.DefaultID()
 	log.Printf("presetDatabase.DefaultID(): %s", presetDatabase.DefaultID())
 	sessionStorage.WriteSession(session)
 	c.JSON(http.StatusOK, session)
 }
 
+// Get a full session and its data.
 func handleSessionGet(c *gin.Context) {
 	sessionId := c.Params.ByName("sessionId")
 
