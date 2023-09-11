@@ -55,3 +55,12 @@ func (this *PresetDatabase) Get(presetID string) *data.Preset {
 	log.Printf("PresetDatabase could not find preset %s", presetID)
 	return nil
 }
+
+func (this *PresetDatabase) DefaultID() string {
+	for _, preset := range this.presets {
+		if preset.Default {
+			return preset.ID
+		}
+	}
+	return ""
+}

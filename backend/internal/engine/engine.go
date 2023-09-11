@@ -134,9 +134,9 @@ func (this *Engine) processWork(work *types.Request, done chan bool) {
 		return
 	}
 
-	backend := this.getBackendByID(model.Engine)
+	backend := this.getBackendByID(model.EngineID)
 	if backend == nil {
-		log.Printf("engine worker: Unable to find backend with ID %s\n", model.Engine)
+		log.Printf("engine worker: Unable to find backend with ID %s\n", model.EngineID)
 		return
 	}
 
@@ -230,4 +230,18 @@ func (this *Engine) ScanModels() {
 		payload:     &scanModelsPayload{wait: returnChannel},
 	}
 	<-returnChannel
+}
+
+func (this *Engine) DefaultID() string {
+	for _, engineBackend := range this.engineBackends {
+		if engineBackend.IsDefault() {
+			engineBackendID := engineBackend.ID()
+			for _, model := range this.models {
+				if model.EngineID == engineBackendID {
+					return model.ID
+				}
+			}
+		}
+	}
+	return ""
 }

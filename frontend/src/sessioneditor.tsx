@@ -36,6 +36,7 @@ export function SessionEditor({sessionId, modelOverview, presetOverview, templat
     if (loadedSession != null) {
       setSelectedModelId(loadedSession?.modelSettings.modelId);
       setSelectedTemplateId(loadedSession?.modelSettings.templateId);
+      setSelectedPresetId(loadedSession?.modelSettings.presetId);
     }
   };
 

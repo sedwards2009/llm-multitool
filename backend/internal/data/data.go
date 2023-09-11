@@ -41,7 +41,7 @@ type ModelOverview struct {
 type Model struct {
 	ID              string `json:"id"`
 	Name            string `json:"name"`
-	Engine          string
+	EngineID        string
 	InternalModelID string
 }
 
@@ -73,6 +73,7 @@ type Preset struct {
 	Name        string  `json:"name" yaml:"name"`
 	Temperature float32 `yaml:"temperature"`
 	TopP        float32 `yaml:"top_p"`
+	Default     bool    `yaml:"default,omitempty"`
 }
 
 type PresetOverview struct {

@@ -10,6 +10,7 @@
   id: chat
   temperature: 0.5
   top_p: 0.5
+  default: true
 - name: Creative Writing
   id: creative
   temperature: 0.7

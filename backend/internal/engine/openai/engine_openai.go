@@ -17,14 +17,16 @@ import (
 )
 
 type OpenAiEngineBackend struct {
-	id     string
-	config *config.EngineBackendConfig
+	id        string
+	config    *config.EngineBackendConfig
+	isDefault bool
 }
 
 func NewEngineBackend(config *config.EngineBackendConfig) OpenAiEngineBackend {
 	return OpenAiEngineBackend{
-		id:     config.Name,
-		config: config,
+		id:        config.Name,
+		config:    config,
+		isDefault: config.Default,
 	}
 }
 
@@ -42,6 +44,10 @@ func (this OpenAiEngineBackend) ID() string {
 	return this.id
 }
 
+func (this OpenAiEngineBackend) IsDefault() bool {
+	return this.isDefault
+}
+
 func (this OpenAiEngineBackend) Process(work *types.Request, model *data.Model, preset *data.Preset) {
 	log.Printf("processOpenAI(): Starting request")
 	work.SetStatusFunc(responsestatus.Running)
@@ -51,7 +57,7 @@ func (this OpenAiEngineBackend) Process(work *types.Request, model *data.Model, 
 
 	req := openai.ChatCompletionRequest{
 		Model:     model.InternalModelID,
-		MaxTokens: 200,
+		MaxTokens: 500,
 		Messages: slices.Map(work.Messages, func(m data.Message) openai.ChatCompletionMessage {
 			openaiRole := openai.ChatMessageRoleUser
 			if m.Role == role.Assistant {
@@ -126,7 +132,7 @@ func (this OpenAiEngineBackend) ScanModels() []*data.Model {
 		result = append(result, &data.Model{
 			ID:              this.id + "_" + modelInfo.ID,
 			Name:            this.id + " - " + modelInfo.ID,
-			Engine:          this.id,
+			EngineID:        this.id,
 			InternalModelID: modelInfo.ID,
 		})
 

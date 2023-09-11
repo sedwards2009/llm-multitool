@@ -25,7 +25,7 @@ import (
 var logger gin.HandlerFunc = nil
 var sessionStorage *storage.ConcurrentSessionStorage = nil
 var llmEngine *engine.Engine = nil
-var presetsDatabase *presets.PresetDatabase = nil
+var presetDatabase *presets.PresetDatabase = nil
 var sessionBroadcaster *broadcaster.Broadcaster = nil
 var templates *template.Templates = nil
 
@@ -42,7 +42,7 @@ func setupTemplates() {
 }
 
 func setupPresets() {
-	presetsDatabase = presets.MakePresetDatabase("/home/sbe/devel/llm-workbench/presets.yaml")
+	presetDatabase = presets.MakePresetDatabase("/home/sbe/devel/llm-workbench/presets.yaml")
 }
 
 func setupBroadcaster() {
@@ -182,13 +182,19 @@ func handleSessionOverview(c *gin.Context) {
 	c.JSON(http.StatusOK, sessionOverview)
 }
 
+// Create a new session.
 func handleNewSession(c *gin.Context) {
 	session := sessionStorage.NewSession()
-	if session != nil {
-		c.JSON(http.StatusOK, session)
+	if session == nil {
+		c.String(http.StatusNotFound, "Session couldn't be created")
 		return
 	}
-	c.String(http.StatusNotFound, "Session couldn't be created")
+
+	session.ModelSettings.ModelID = llmEngine.DefaultID()
+	session.ModelSettings.PresetID = presetDatabase.DefaultID()
+	log.Printf("presetDatabase.DefaultID(): %s", presetDatabase.DefaultID())
+	sessionStorage.WriteSession(session)
+	c.JSON(http.StatusOK, session)
 }
 
 func handleSessionGet(c *gin.Context) {
@@ -355,7 +361,7 @@ func handleSessionModelSettingsPut(c *gin.Context) {
 		return
 	}
 
-	if !presetsDatabase.Exists(data.PresetID) {
+	if !presetDatabase.Exists(data.PresetID) {
 		c.String(http.StatusBadRequest, "An invalid PresetID was given in the PUT body.")
 		return
 	}
@@ -436,7 +442,7 @@ func getResponseFromSessionByID(session *data.Session, responseID string) *data.
 }
 
 func handlePresetOverviewGet(c *gin.Context) {
-	presetOverview := presetsDatabase.PresetOverview()
+	presetOverview := presetDatabase.PresetOverview()
 	c.JSON(http.StatusOK, presetOverview)
 }
 
@@ -449,7 +455,7 @@ func main() {
 	// parsedArgs, errorString := argsparser.Parse(&os.Args)
 	setupStorage()
 	setupPresets()
-	setupEngine(presetsDatabase)
+	setupEngine(presetDatabase)
 	setupBroadcaster()
 	setupTemplates()
 	r := setupRouter()
