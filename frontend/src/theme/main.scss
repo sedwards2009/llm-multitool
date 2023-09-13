@@ -12,16 +12,20 @@
   flex-direction: row;
   width: 100%;
 
+  & > .session-list {
+    flex-grow: 0;
+  }
+
   & > .session-tab {
     padding: $panel-body-padding;
     flex-grow: 1;
+    min-width: 0;
   }
 }
 
 .session-editor {
   display: flex;
   flex-direction: column;
-  max-width: 80rem;
 }
 
 .prompt-header {
@@ -46,6 +50,7 @@
 
   & > .response-message-text {
     flex-grow: 1;
+    overflow: hidden;
   }
 
   & > .response-message-text > P {
