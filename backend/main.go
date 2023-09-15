@@ -1,9 +1,11 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"log"
 	"net/http"
+	"path"
 	"time"
 
 	"sedwards2009/llm-workbench/internal/broadcaster"
@@ -21,6 +23,9 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 )
+
+//go:embed resources/*
+var staticFS embed.FS
 
 var logger gin.HandlerFunc = nil
 var sessionStorage *storage.ConcurrentSessionStorage = nil
@@ -64,24 +69,39 @@ func setupRouter() *gin.Engine {
 		MaxAge:           10 * time.Second,
 	}))
 
-	r.GET("/ping", handlePing)
-	r.GET("/session", handleSessionOverview)
-	r.POST("/session", handleNewSession)
-	r.GET("/session/:sessionId", handleSessionGet)
-	r.PUT("/session/:sessionId/prompt", handleSessionPromptPut)
-	r.DELETE("/session/:sessionId", handleSessionDelete)
-	r.POST("/session/:sessionId/response", handleResponsePost)
-	r.GET("/session/:sessionId/changes", handleSessionChangesGet)
-	r.DELETE("/session/:sessionId/response/:responseId", handleResponseDelete)
-	r.GET("/model", handleModelOverviewGet)
-	r.POST("/model/scan", handleModelScanPost)
-	r.PUT("/session/:sessionId/modelSettings", handleSessionModelSettingsPut)
-	r.POST("/session/:sessionId/response/:responseId/message", handleNewMessagePost)
-	r.POST("/session/:sessionId/response/:responseId/continue", handleMessageContinuePost)
-	r.GET("/template", handleTemplateOverviewGet)
-	r.GET("/preset", handlePresetOverviewGet)
+	r.GET("/", handleIndex)
+	r.GET("/assets/*filepath", handleAssets)
+	r.GET("/session/:sessionId", handleIndex)
+	r.GET("/api/ping", handlePing)
+	r.GET("/api/session", handleSessionOverview)
+	r.POST("/api/session", handleNewSession)
+	r.GET("/api/session/:sessionId", handleSessionGet)
+	r.PUT("/api/session/:sessionId/prompt", handleSessionPromptPut)
+	r.DELETE("/api/session/:sessionId", handleSessionDelete)
+	r.POST("/api/session/:sessionId/response", handleResponsePost)
+	r.GET("/api/session/:sessionId/changes", handleSessionChangesGet)
+	r.DELETE("/api/session/:sessionId/response/:responseId", handleResponseDelete)
+	r.GET("/api/model", handleModelOverviewGet)
+	r.POST("/api/model/scan", handleModelScanPost)
+	r.PUT("/api/session/:sessionId/modelSettings", handleSessionModelSettingsPut)
+	r.POST("/api/session/:sessionId/response/:responseId/message", handleNewMessagePost)
+	r.POST("/api/session/:sessionId/response/:responseId/continue", handleMessageContinuePost)
+	r.GET("/api/template", handleTemplateOverviewGet)
+	r.GET("/api/preset", handlePresetOverviewGet)
 
 	return r
+}
+
+func handleIndex(c *gin.Context) {
+	// Work-around for one of the dumbest problems regarding index.html
+	// See: https://github.com/gin-gonic/gin/issues/2654
+	contents, _ := staticFS.ReadFile("resources/index.html")
+	c.Header("Content-Type", "text/html")
+	c.Data(http.StatusOK, "text/html", contents)
+}
+
+func handleAssets(c *gin.Context) {
+	c.FileFromFS(path.Join("resources/", c.Request.URL.Path), http.FS(staticFS))
 }
 
 func handlePing(c *gin.Context) {

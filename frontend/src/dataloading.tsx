@@ -6,8 +6,8 @@ export interface LoaderResult {
   session?: Session;
 }
 
-const SERVER_BASE_URL = "http://localhost:8080";
-const WEBSOCKET_SERVER_BASE_URL = "ws://localhost:8080";
+const SERVER_BASE_URL = "http://localhost:8080/api";
+const WEBSOCKET_SERVER_BASE_URL = "ws://localhost:8080/api";
 
 export async function loadModelOverview(): Promise<ModelOverview> {
   const response = await fetch(`${SERVER_BASE_URL}/model`);

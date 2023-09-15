@@ -21,7 +21,7 @@ export function SessionEditor({sessionId, modelOverview, presetOverview, templat
 
   const [session, setSession] = useState<Session | null>(null);
   const [sessionReload, setSessionReload] = useState<number>(0);
-  const [sessionMonitor, setSessionMonitor] = useState<SessionMonitor | null>(null);
+  const [_, setSessionMonitor] = useState<SessionMonitor | null>(null);
   const [sessionMonitorState, setSessionMonitorState] = useState<SessionMonitorState>(SessionMonitorState.IDLE);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
