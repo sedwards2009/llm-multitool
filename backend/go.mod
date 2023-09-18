@@ -3,6 +3,7 @@ module sedwards2009/llm-workbench
 go 1.20
 
 require (
+	github.com/akamensky/argparse v1.4.0 // indirect
 	github.com/bobg/go-generics v1.7.2 // indirect
 	github.com/bobg/go-generics/v2 v2.2.0 // indirect
 	github.com/bytedance/sonic v1.9.2 // indirect

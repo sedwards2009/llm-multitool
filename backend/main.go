@@ -8,6 +8,7 @@ import (
 	"path"
 	"time"
 
+	"sedwards2009/llm-workbench/internal/argsparser"
 	"sedwards2009/llm-workbench/internal/broadcaster"
 	"sedwards2009/llm-workbench/internal/data"
 	"sedwards2009/llm-workbench/internal/data/responsestatus"
@@ -21,7 +22,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/joho/godotenv"
 )
 
 //go:embed resources/*
@@ -34,24 +34,24 @@ var presetDatabase *presets.PresetDatabase = nil
 var sessionBroadcaster *broadcaster.Broadcaster = nil
 var templates *template.Templates = nil
 
-func setupStorage() {
-	sessionStorage = storage.NewConcurrentSessionStorage("/home/sbe/devel/llm-workbench/data")
+func setupStorage(storagePath string) *storage.ConcurrentSessionStorage {
+	return storage.NewConcurrentSessionStorage(storagePath)
 }
 
-func setupEngine(presetDatabase *presets.PresetDatabase) {
-	llmEngine = engine.NewEngine("/home/sbe/devel/llm-workbench/backend.yaml", presetDatabase)
+func setupEngine(configPath string, presetDatabase *presets.PresetDatabase) *engine.Engine {
+	return engine.NewEngine(configPath, presetDatabase)
 }
 
-func setupTemplates() {
-	templates = template.NewTemplates()
+func setupTemplates() *template.Templates {
+	return template.NewTemplates()
 }
 
-func setupPresets() {
-	presetDatabase = presets.MakePresetDatabase("/home/sbe/devel/llm-workbench/presets.yaml")
+func setupPresets(presetsPath string) *presets.PresetDatabase {
+	return presets.MakePresetDatabase(presetsPath)
 }
 
-func setupBroadcaster() {
-	sessionBroadcaster = broadcaster.NewBroadcaster()
+func setupBroadcaster() *broadcaster.Broadcaster {
+	return broadcaster.NewBroadcaster()
 }
 
 func setupRouter() *gin.Engine {
@@ -469,17 +469,16 @@ func handlePresetOverviewGet(c *gin.Context) {
 }
 
 func main() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		fmt.Println("Error loading .env file.")
+	config := argsparser.Parse()
+	if config == nil {
+		return
 	}
 
-	// parsedArgs, errorString := argsparser.Parse(&os.Args)
-	setupStorage()
-	setupPresets()
-	setupEngine(presetDatabase)
-	setupBroadcaster()
-	setupTemplates()
+	sessionStorage = setupStorage(config.StoragePath)
+	presetDatabase = setupPresets(config.PresetsPath)
+	llmEngine = setupEngine(config.ConfigFilePath, presetDatabase)
+	sessionBroadcaster = setupBroadcaster()
+	templates = setupTemplates()
 	r := setupRouter()
 	r.Run(":8080")
 }
