@@ -11,6 +11,7 @@ type CommandLineArguments struct {
 	ConfigFilePath string
 	StoragePath    string
 	PresetsPath    string
+	Address        string
 }
 
 func Parse() *CommandLineArguments {
@@ -36,6 +37,12 @@ func Parse() *CommandLineArguments {
 			Help:     "Path to the file containing generation parameter presets",
 			Default:  "presets.yaml"})
 
+	address := parser.String("a", "address",
+		&argparse.Options{
+			Required: false,
+			Help:     "Address and port to server from",
+			Default:  "127.0.0.1:5050"})
+
 	err := parser.Parse(os.Args)
 	if err != nil {
 		// In case of error print error and print usage
@@ -47,6 +54,7 @@ func Parse() *CommandLineArguments {
 	result.ConfigFilePath = *configPath
 	result.StoragePath = *storagePath
 	result.PresetsPath = *presetsPath
+	result.Address = *address
 
 	return result
 }

@@ -480,5 +480,6 @@ func main() {
 	sessionBroadcaster = setupBroadcaster()
 	templates = setupTemplates()
 	r := setupRouter()
-	r.Run(":8080")
+	fmt.Printf("\n    Starting server on http://%s\n\n", config.Address)
+	r.Run(config.Address)
 }
