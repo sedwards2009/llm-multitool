@@ -1,0 +1,35 @@
+version: '3'
+
+tasks:
+  build:
+    deps: [frontend, generate, backend]
+
+  prepare:
+    deps: [prepare-backend, prepare-frontend]
+
+  prepare-backend:
+    dir: ./backend
+    cmds:
+      - go install -v github.com/searKing/golang/tools/go-enum
+
+  prepare-frontend:
+    dir: ./frontend
+    cmds:
+      - npm install
+
+  generate:
+    dir: ./backend
+    cmds:
+      - go generate -v -x ./...
+    
+  frontend:
+    cmds:
+      - cd ./frontend && npm run build
+      - cmd: rm -r ./backend/resources
+        ignore_error: true
+      - cp -r ./frontend/dist ./backend/resources
+
+  backend:
+    dir: ./backend
+    cmds:
+      - go build .
