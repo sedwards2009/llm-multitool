@@ -59,10 +59,10 @@ type Message struct {
 }
 
 type Template struct {
-	ID             string `json:"id"`
-	Name           string `json:"name"`
-	TemplateString string `json:"templateString"`
-	Default        bool
+	ID             string `json:"id" yaml:"id"`
+	Name           string `json:"name" yaml:"name"`
+	TemplateString string `json:"templateString" yaml:"template_string"`
+	Default        bool   `yaml:"default,omitempty"`
 }
 
 type TemplateOverview struct {

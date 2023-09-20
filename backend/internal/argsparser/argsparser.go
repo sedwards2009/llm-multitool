@@ -11,6 +11,7 @@ type CommandLineArguments struct {
 	ConfigFilePath string
 	StoragePath    string
 	PresetsPath    string
+	TemplatesPath  string
 	Address        string
 }
 
@@ -37,6 +38,12 @@ func Parse() *CommandLineArguments {
 			Help:     "Path to the file containing generation parameter presets",
 			Default:  "presets.yaml"})
 
+	templatesPath := parser.String("t", "templates",
+		&argparse.Options{
+			Required: false,
+			Help:     "Path to the file containing templates",
+			Default:  "templates.yaml"})
+
 	address := parser.String("a", "address",
 		&argparse.Options{
 			Required: false,
@@ -54,6 +61,7 @@ func Parse() *CommandLineArguments {
 	result.ConfigFilePath = *configPath
 	result.StoragePath = *storagePath
 	result.PresetsPath = *presetsPath
+	result.TemplatesPath = *templatesPath
 	result.Address = *address
 
 	return result

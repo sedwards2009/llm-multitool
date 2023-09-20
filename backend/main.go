@@ -32,7 +32,7 @@ var sessionStorage *storage.ConcurrentSessionStorage = nil
 var llmEngine *engine.Engine = nil
 var presetDatabase *presets.PresetDatabase = nil
 var sessionBroadcaster *broadcaster.Broadcaster = nil
-var templates *template.Templates = nil
+var templates *template.TemplateDatabase = nil
 
 func setupStorage(storagePath string) *storage.ConcurrentSessionStorage {
 	return storage.NewConcurrentSessionStorage(storagePath)
@@ -42,8 +42,8 @@ func setupEngine(configPath string, presetDatabase *presets.PresetDatabase) *eng
 	return engine.NewEngine(configPath, presetDatabase)
 }
 
-func setupTemplates() *template.Templates {
-	return template.NewTemplates()
+func setupTemplates(templatesPath string) *template.TemplateDatabase {
+	return template.NewTemplateDatabase(templatesPath)
 }
 
 func setupPresets(presetsPath string) *presets.PresetDatabase {
@@ -478,7 +478,7 @@ func main() {
 	presetDatabase = setupPresets(config.PresetsPath)
 	llmEngine = setupEngine(config.ConfigFilePath, presetDatabase)
 	sessionBroadcaster = setupBroadcaster()
-	templates = setupTemplates()
+	templates = setupTemplates(config.TemplatesPath)
 	r := setupRouter()
 	fmt.Printf("\n    Starting server on http://%s\n\n", config.Address)
 	r.Run(config.Address)

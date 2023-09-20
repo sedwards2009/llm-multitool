@@ -27,10 +27,10 @@ func MakePresetDatabase(file string) *PresetDatabase {
 func (this *PresetDatabase) readPresetsFile(file string) error {
 	f, err := os.ReadFile(file)
 	if err != nil {
-		return fmt.Errorf("Cannot read config file '%s': %w", file, err)
+		return fmt.Errorf("Cannot read presets file '%s': %w", file, err)
 	}
 	if err := yaml.Unmarshal(f, &this.presets); err != nil {
-		return fmt.Errorf("Cannot unmarshal config file '%s': %w", file, err)
+		return fmt.Errorf("Cannot unmarshal presets file '%s': %w", file, err)
 	}
 	return nil
 }

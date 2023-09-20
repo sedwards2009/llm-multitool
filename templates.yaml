@@ -1,0 +1,39 @@
+- id: 9e8df77f-c9c8-4683-995f-d744376901b5
+  name: Instruct
+  template_string: "{{prompt}}"
+  default: true
+
+- id: "4c080472-0aee-42cc-a100-e0fbb845f5a0"
+  name: "Summerize text"
+  template_string: |-
+    Summarize the following passage in a concise manner. Only give the summary.:
+
+    {{prompt}}
+
+- id: "91ccfaa5-5c46-4fee-bed4-37ca902789de"
+  name: "Translate to Dutch"
+  template_string: |-
+    Translate the following passage to Dutch. Only give the translation.:
+  
+    {{prompt}}
+
+- id: "3b43850e-cc14-4516-85b9-4ba77e5939dd"
+  name: "Translate to French"
+  template_string: |-
+    Translate the following passage to French. Only give the translation.:
+  
+    {{prompt}}
+
+- id: "e60c5bc8-132b-4d13-aab9-17043b234819"
+  name: "Proofread and correct errors"
+  template_string: |-
+    Proofread and edit the following text for any errors, typos, or mistakes:
+  
+    {{prompt}}
+
+- id: "242a5f99-f190-443f-9fe1-2806c904c2cd"
+  name: "Translate to English"
+  template_string: |-
+    Translate the following passage to English. Only give the translation.:
+
+    {{prompt}}
