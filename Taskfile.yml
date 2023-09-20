@@ -2,7 +2,9 @@ version: '3'
 
 tasks:
   build:
-    deps: [frontend, generate, backend]
+    cmds:
+      - task: frontend
+      - task: backend
 
   prepare:
     deps: [prepare-backend, prepare-frontend]
@@ -16,11 +18,6 @@ tasks:
     dir: ./frontend
     cmds:
       - npm install
-
-  generate:
-    dir: ./backend
-    cmds:
-      - go generate -v -x ./...
     
   frontend:
     cmds:
@@ -32,4 +29,5 @@ tasks:
   backend:
     dir: ./backend
     cmds:
+      - go generate -v -x ./...
       - go build .
