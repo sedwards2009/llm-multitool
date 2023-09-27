@@ -1,4 +1,4 @@
-package simple_storage
+package mem_storage
 
 import (
 	"encoding/json"

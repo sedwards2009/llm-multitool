@@ -14,8 +14,8 @@ import (
 	"sedwards2009/llm-workbench/internal/data/responsestatus"
 	"sedwards2009/llm-workbench/internal/data/role"
 	"sedwards2009/llm-workbench/internal/engine"
+	"sedwards2009/llm-workbench/internal/mem_storage"
 	"sedwards2009/llm-workbench/internal/presets"
-	"sedwards2009/llm-workbench/internal/simple_storage"
 	"sedwards2009/llm-workbench/internal/template"
 
 	"github.com/bobg/go-generics/v2/slices"
@@ -29,14 +29,14 @@ import (
 var staticFS embed.FS
 
 var logger gin.HandlerFunc = nil
-var sessionStorage *simple_storage.SimpleStorage = nil
+var sessionStorage *mem_storage.SimpleStorage = nil
 var llmEngine *engine.Engine = nil
 var presetDatabase *presets.PresetDatabase = nil
 var sessionBroadcaster *broadcaster.Broadcaster = nil
 var templates *template.TemplateDatabase = nil
 
-func setupStorage(storagePath string) *simple_storage.SimpleStorage {
-	return simple_storage.New(storagePath)
+func setupStorage(storagePath string) *mem_storage.SimpleStorage {
+	return mem_storage.New(storagePath)
 }
 
 func setupEngine(configPath string, presetDatabase *presets.PresetDatabase) *engine.Engine {
