@@ -31,3 +31,8 @@ tasks:
     cmds:
       - go generate -v -x ./...
       - go build .
+
+  test:
+    dir: ./backend
+    cmds:
+      - go test ./...

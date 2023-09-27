@@ -1,12 +1,16 @@
-package storage
+package simple_storage
 
 import (
 	"testing"
 )
 
-func TestConcurrentSave(t *testing.T) {
+func TestSave(t *testing.T) {
 	tempDir := t.TempDir()
-	storage := NewConcurrentSessionStorage(tempDir)
+	storage := New(tempDir)
+
+	if len(storage.SessionOverview().SessionSummaries) != 0 {
+		t.Errorf("Empty SessionOverview didn't have empty array.")
+	}
 	session := storage.NewSession()
 
 	sessionOverview := storage.SessionOverview()
@@ -15,13 +19,13 @@ func TestConcurrentSave(t *testing.T) {
 	}
 }
 
-func TestConcurrentRoundTrip(t *testing.T) {
+func TestRoundTrip(t *testing.T) {
 	tempDir := t.TempDir()
-	storage := NewConcurrentSessionStorage(tempDir)
+	storage := New(tempDir)
 	session := storage.NewSession()
 	session2 := storage.NewSession()
 
-	storage2 := NewConcurrentSessionStorage(tempDir)
+	storage2 := New(tempDir)
 	overview := storage2.SessionOverview()
 
 	if len(overview.SessionSummaries) != 2 {
@@ -38,9 +42,9 @@ func TestConcurrentRoundTrip(t *testing.T) {
 	}
 }
 
-func TestConcurrentNewWriteRead(t *testing.T) {
+func TestNewWriteRead(t *testing.T) {
 	tempDir := t.TempDir()
-	storage := NewConcurrentSessionStorage(tempDir)
+	storage := New(tempDir)
 	session := storage.NewSession()
 	session.Title = "A test"
 
@@ -53,24 +57,22 @@ func TestConcurrentNewWriteRead(t *testing.T) {
 	}
 }
 
-func TestConcurrentResponseDelete(t *testing.T) {
+func TestNewResponseWriteRead(t *testing.T) {
 	tempDir := t.TempDir()
-	storage := NewSessionStorage(tempDir)
+	storage := New(tempDir)
 	session := storage.NewSession()
 	session.Title = "A test"
 
+	id := session.ID
+	response := storage.NewResponse(session)
 	storage.WriteSession(session)
 
-	id := session.ID
-	response, err := storage.NewResponse(session.ID)
-	if err != nil {
-
+	session2 := storage.ReadSession(id)
+	if len(session2.Responses) != 1 {
+		t.Errorf("TestNewResponseWriteRead failed. Expected len(session2.Responses), got %d", len(session2.Responses))
 	}
 
-	storage.DeleteResponse(session.ID, response.ID)
-
-	session2 := storage.ReadSession(id)
-	if len(session2.Responses) != 0 {
-		t.Errorf("TestNewResponseWriteRead failed. Expected len(session2.Responses), got %d", len(session2.Responses))
+	if session2.Responses[0].ID != response.ID {
+		t.Errorf("TestNewResponseWriteRead failed. Expected to find our response struct.")
 	}
 }

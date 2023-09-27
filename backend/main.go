@@ -15,12 +15,13 @@ import (
 	"sedwards2009/llm-workbench/internal/data/role"
 	"sedwards2009/llm-workbench/internal/engine"
 	"sedwards2009/llm-workbench/internal/presets"
-	"sedwards2009/llm-workbench/internal/storage"
+	"sedwards2009/llm-workbench/internal/simple_storage"
 	"sedwards2009/llm-workbench/internal/template"
 
 	"github.com/bobg/go-generics/v2/slices"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -28,14 +29,14 @@ import (
 var staticFS embed.FS
 
 var logger gin.HandlerFunc = nil
-var sessionStorage *storage.ConcurrentSessionStorage = nil
+var sessionStorage *simple_storage.SimpleStorage = nil
 var llmEngine *engine.Engine = nil
 var presetDatabase *presets.PresetDatabase = nil
 var sessionBroadcaster *broadcaster.Broadcaster = nil
 var templates *template.TemplateDatabase = nil
 
-func setupStorage(storagePath string) *storage.ConcurrentSessionStorage {
-	return storage.NewConcurrentSessionStorage(storagePath)
+func setupStorage(storagePath string) *simple_storage.SimpleStorage {
+	return simple_storage.New(storagePath)
 }
 
 func setupEngine(configPath string, presetDatabase *presets.PresetDatabase) *engine.Engine {
@@ -274,24 +275,26 @@ func handleResponsePost(c *gin.Context) {
 	}
 
 	session.Title = templates.MakeTitle(session.ModelSettings.TemplateID, session.Prompt)
-	sessionStorage.WriteSession(session)
+	response := sessionStorage.NewResponse(session)
 
-	response, err := sessionStorage.NewResponse(sessionId)
-	if err != nil {
-		c.String(http.StatusInternalServerError, fmt.Sprintf("Error occured while creating new response: %v", err))
-		return
-	}
 	responseId := response.ID
 
 	formattedPrompt := templates.ApplyTemplate(session.ModelSettings.TemplateID, session.Prompt)
-	sessionStorage.AppendMessage(sessionId, responseId, role.User, formattedPrompt)
-	sessionStorage.AppendMessage(sessionId, responseId, role.Assistant, "")
 
-	session = sessionStorage.ReadSession(sessionId)
-	response = getResponseFromSessionByID(session, responseId)
+	response.Messages = append(response.Messages, data.Message{
+		ID:   uuid.NewString(),
+		Role: role.User,
+		Text: formattedPrompt,
+	})
+	response.Messages = append(response.Messages, data.Message{
+		ID:   uuid.NewString(),
+		Role: role.Assistant,
+		Text: "",
+	})
+	sessionStorage.WriteSession(session)
 
 	appendFunc := func(text string) {
-		sessionStorage.AppendToLastMessage(sessionId, responseId, text)
+		appendToLastMessage(sessionId, responseId, text)
 		sessionBroadcaster.Send(sessionId, "changed")
 	}
 
@@ -300,7 +303,10 @@ func handleResponsePost(c *gin.Context) {
 	}
 
 	setStatusFunc := func(status responsestatus.ResponseStatus) {
-		sessionStorage.SetResponseStatus(sessionId, responseId, status)
+		editResponse(sessionId, responseId, func(session *data.Session, response *data.Response) bool {
+			response.Status = status
+			return true
+		})
 		sessionBroadcaster.Send(sessionId, "changed")
 	}
 
@@ -308,15 +314,48 @@ func handleResponsePost(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+func editResponse(sessionId string, responseId string, callback func(*data.Session, *data.Response) bool) bool {
+	session := sessionStorage.ReadSession(sessionId)
+	if session == nil {
+		return false
+	}
+	for _, r := range session.Responses {
+		if r.ID == responseId {
+			if callback(session, r) {
+				sessionStorage.WriteSession(session)
+			}
+			return true
+		}
+	}
+	return false
+}
+
+func appendToLastMessage(sessionId string, responseId string, text string) bool {
+	return editResponse(sessionId, responseId, func(session *data.Session, response *data.Response) bool {
+		response.Messages[len(response.Messages)-1].Text += text
+		return true
+	})
+}
+
 func handleResponseDelete(c *gin.Context) {
 	sessionId := c.Params.ByName("sessionId")
 	responseId := c.Params.ByName("responseId")
 
-	err := sessionStorage.DeleteResponse(sessionId, responseId)
-	if err != nil {
-		c.String(http.StatusInternalServerError, fmt.Sprintf("Error occured while deleting response: %v", err))
+	session := sessionStorage.ReadSession(sessionId)
+	if session == nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("Unable to find session with ID %s\n", sessionId))
 		return
 	}
+
+	originalLength := len(session.Responses)
+	session.Responses = slices.Filter(session.Responses, func(r *data.Response) bool {
+		return r.ID != responseId
+	})
+	if originalLength == len(session.Responses) {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("Unable to find response with ID %s\n", responseId))
+		return
+	}
+	sessionStorage.WriteSession(session)
 
 	c.Status(http.StatusNoContent)
 }
@@ -337,7 +376,7 @@ func handleMessageContinuePost(c *gin.Context) {
 	}
 
 	appendFunc := func(text string) {
-		sessionStorage.AppendToLastMessage(sessionId, responseId, text)
+		appendToLastMessage(sessionId, responseId, text)
 		sessionBroadcaster.Send(sessionId, "changed")
 	}
 
@@ -346,7 +385,10 @@ func handleMessageContinuePost(c *gin.Context) {
 	}
 
 	setStatusFunc := func(status responsestatus.ResponseStatus) {
-		sessionStorage.SetResponseStatus(sessionId, responseId, status)
+		editResponse(sessionId, responseId, func(session *data.Session, response *data.Response) bool {
+			response.Status = status
+			return true
+		})
 		sessionBroadcaster.Send(sessionId, "changed")
 	}
 
@@ -396,23 +438,7 @@ func handleSessionModelSettingsPut(c *gin.Context) {
 
 func handleNewMessagePost(c *gin.Context) {
 	sessionId := c.Params.ByName("sessionId")
-	session := sessionStorage.ReadSession(sessionId)
-	if session == nil {
-		c.String(http.StatusNotFound, "Session not found")
-		return
-	}
-
 	responseId := c.Params.ByName("responseId")
-	responseIndex := slices.IndexFunc(session.Responses, func(r *data.Response) bool {
-		return responseId == r.ID
-	})
-	if responseIndex == -1 {
-		c.String(http.StatusNotFound, "Response not found")
-		return
-	}
-
-	response := session.Responses[responseIndex]
-
 	var postData struct {
 		Value string `json:"value"`
 	}
@@ -420,17 +446,31 @@ func handleNewMessagePost(c *gin.Context) {
 		c.String(http.StatusBadRequest, "Couldn't parse the JSON POST body.")
 		return
 	}
-	sessionStorage.AppendMessage(sessionId, responseId, role.User, postData.Value)
 
-	sessionStorage.AppendMessage(sessionId, responseId, role.Assistant, "")
-	session = sessionStorage.ReadSession(sessionId)
-	responseIndex = slices.IndexFunc(session.Responses, func(r *data.Response) bool {
-		return responseId == r.ID
-	})
-	response = session.Responses[responseIndex]
+	var foundSession *data.Session
+	var foundResponse *data.Response
+
+	if !editResponse(sessionId, responseId, func(session *data.Session, response *data.Response) bool {
+		foundResponse = response
+		foundSession = session
+		response.Messages = append(response.Messages, data.Message{
+			ID:   uuid.NewString(),
+			Role: role.User,
+			Text: postData.Value,
+		})
+		response.Messages = append(response.Messages, data.Message{
+			ID:   uuid.NewString(),
+			Role: role.Assistant,
+			Text: "",
+		})
+		return true
+	}) {
+		c.String(http.StatusNotFound, "Response not found")
+		return
+	}
 
 	appendFunc := func(text string) {
-		sessionStorage.AppendToLastMessage(sessionId, responseId, text)
+		appendToLastMessage(sessionId, responseId, text)
 		sessionBroadcaster.Send(sessionId, "changed")
 	}
 
@@ -439,12 +479,15 @@ func handleNewMessagePost(c *gin.Context) {
 	}
 
 	setStatusFunc := func(status responsestatus.ResponseStatus) {
-		sessionStorage.SetResponseStatus(sessionId, responseId, status)
+		editResponse(sessionId, responseId, func(session *data.Session, response *data.Response) bool {
+			response.Status = status
+			return true
+		})
 		sessionBroadcaster.Send(sessionId, "changed")
 	}
 
-	llmEngine.Enqueue(response.Messages, appendFunc, completeFunc, setStatusFunc, session.ModelSettings)
-	c.JSON(http.StatusOK, response)
+	llmEngine.Enqueue(foundResponse.Messages, appendFunc, completeFunc, setStatusFunc, foundSession.ModelSettings)
+	c.JSON(http.StatusOK, foundResponse)
 }
 
 func handleTemplateOverviewGet(c *gin.Context) {
