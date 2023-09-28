@@ -19,14 +19,19 @@ type SimpleStorage struct {
 	storagePath string
 	sessions    map[string]*data.Session
 	lock        sync.Mutex
+	writeChan   chan *data.Session
 }
+
+const WRITE_BACK_QUEUE_LENGTH = 128
 
 func New(storagePath string) *SimpleStorage {
 	instance := &SimpleStorage{
 		storagePath: storagePath,
 		sessions:    make(map[string]*data.Session, 16),
+		writeChan:   make(chan *data.Session, WRITE_BACK_QUEUE_LENGTH),
 	}
 	instance.scan()
+	go instance.writer(instance.writeChan)
 	return instance
 }
 
@@ -178,7 +183,13 @@ func (this *SimpleStorage) NewSession() *data.Session {
 }
 
 func (this *SimpleStorage) ReadSession(id string) *data.Session {
+	this.lock.Lock()
+	defer this.lock.Unlock()
+
 	session := this.sessions[id]
+	if session == nil {
+		return nil
+	}
 	return copySession(session)
 }
 
@@ -188,7 +199,42 @@ func (this *SimpleStorage) WriteSession(session *data.Session) {
 
 	sessionCopy := copySession(session)
 	this.cacheSession(sessionCopy)
-	this.writeToDisk(sessionCopy)
+
+	this.writeChan <- sessionCopy
+}
+
+/*
+ * Goroutine which receives Sessions to save and writes them back to disk.
+ */
+func (this *SimpleStorage) writer(workChan chan *data.Session) {
+	workPool := make(map[string]*data.Session)
+
+	for {
+		session := <-workChan
+		workPool[session.ID] = session
+		log.Printf("Received %s for writing\n", session.ID)
+
+		for {
+			select {
+			case session := <-workChan:
+				workPool[session.ID] = session
+				log.Printf("Received %s for writing\n", session.ID)
+			default:
+				break
+			}
+
+			if len(workPool) == 0 {
+				break
+			}
+
+			for _, s := range workPool {
+				log.Printf("Writing %s\n", s.ID)
+				this.writeToDisk(s)
+				delete(workPool, s.ID)
+				break
+			}
+		}
+	}
 }
 
 func (this *SimpleStorage) writeToDisk(session *data.Session) {
