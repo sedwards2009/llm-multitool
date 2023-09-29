@@ -7,7 +7,7 @@ import (
 
 type Request struct {
 	Messages      []data.Message
-	AppendFunc    func(string)
+	AppendFunc    func(string) bool
 	CompleteFunc  func()
 	SetStatusFunc func(status responsestatus.ResponseStatus)
 	ModelSettings *data.ModelSettings

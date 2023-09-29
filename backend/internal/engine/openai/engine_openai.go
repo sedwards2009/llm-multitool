@@ -92,7 +92,9 @@ func (this OpenAiEngineBackend) Process(work *types.Request, model *data.Model, 
 			work.SetStatusFunc(responsestatus.Error)
 			break
 		}
-		work.AppendFunc(response.Choices[0].Delta.Content)
+		if !work.AppendFunc(response.Choices[0].Delta.Content) {
+			break
+		}
 	}
 	work.SetStatusFunc(responsestatus.Done)
 	log.Printf("processOpenAI(): ChatCompletionStream completed")

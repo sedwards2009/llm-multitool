@@ -293,9 +293,10 @@ func handleResponsePost(c *gin.Context) {
 	})
 	sessionStorage.WriteSession(session)
 
-	appendFunc := func(text string) {
-		appendToLastMessage(sessionId, responseId, text)
+	appendFunc := func(text string) bool {
+		success := appendToLastMessage(sessionId, responseId, text)
 		sessionBroadcaster.Send(sessionId, "changed")
+		return success
 	}
 
 	completeFunc := func() {
@@ -375,9 +376,10 @@ func handleMessageContinuePost(c *gin.Context) {
 		return
 	}
 
-	appendFunc := func(text string) {
-		appendToLastMessage(sessionId, responseId, text)
+	appendFunc := func(text string) bool {
+		success := appendToLastMessage(sessionId, responseId, text)
 		sessionBroadcaster.Send(sessionId, "changed")
+		return success
 	}
 
 	completeFunc := func() {
@@ -469,9 +471,10 @@ func handleNewMessagePost(c *gin.Context) {
 		return
 	}
 
-	appendFunc := func(text string) {
-		appendToLastMessage(sessionId, responseId, text)
+	appendFunc := func(text string) bool {
+		success := appendToLastMessage(sessionId, responseId, text)
 		sessionBroadcaster.Send(sessionId, "changed")
+		return success
 	}
 
 	completeFunc := func() {
