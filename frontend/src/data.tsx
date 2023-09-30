@@ -35,6 +35,13 @@ export interface Response {
   creationTimestamp: string;
   status: ResponseStatus;
   messages: Message[];
+  modelSettingsSnapshot: ModelSettingsSnapshot;
+}
+
+export interface ModelSettingsSnapshot {
+	modelName: string;
+	templateName: string;
+	presetName: string;
 }
 
 export type Role = "User" | "Assistant";

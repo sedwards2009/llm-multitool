@@ -32,6 +32,12 @@
   cursor: pointer;
 }
 
+.response-settings {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid $hr-border-color;
+  margin-bottom: 0.5rem;
+}
+
 .response-message {
   display: flex;
   gap: $component-padding-horizontal;

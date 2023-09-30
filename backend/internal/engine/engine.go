@@ -134,7 +134,7 @@ func (this *Engine) processWork(work *types.Request, done chan bool) {
 		done <- true
 	}()
 
-	model := this.getModelByID(work.ModelSettings.ModelID)
+	model := this.GetModel(work.ModelSettings.ModelID)
 	if model == nil {
 		log.Printf("engine worker: Unable to find model with ID %s\n", work.ModelSettings.ModelID)
 		return
@@ -150,7 +150,7 @@ func (this *Engine) processWork(work *types.Request, done chan bool) {
 	backend.Process(work, model, preset)
 }
 
-func (this *Engine) getModelByID(modelID string) *data.Model {
+func (this *Engine) GetModel(modelID string) *data.Model {
 	for _, model := range this.models {
 		if model.ID == modelID {
 			return model

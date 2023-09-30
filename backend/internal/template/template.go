@@ -66,6 +66,10 @@ func (this *TemplateDatabase) ApplyTemplate(templateID string, promptText string
 	return strings.Replace(template.TemplateString, "{{prompt}}", promptText, -1)
 }
 
+func (this *TemplateDatabase) Get(templateID string) *data.Template {
+	return this.getTemplateByID(templateID)
+}
+
 func (this *TemplateDatabase) getTemplateByID(templateID string) *data.Template {
 	matches := slices.Filter(this.templates, func(t *data.Template) bool {
 		return t.ID == templateID

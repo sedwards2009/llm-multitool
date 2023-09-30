@@ -47,6 +47,30 @@ export function ResponseEditor({response, onContinueClicked, onDeleteClicked, on
     {response.messages.length !==0 &&
       <h4 className="prompt-header" onClick={onPromptClicked}><i className={classNames({"fa": true, "fa-chevron-right": !isPromptOpen, "fa-chevron-down": isPromptOpen})}></i> Prompt </h4>
     }
+    {isPromptOpen && response.modelSettingsSnapshot != null &&
+      <div className="gui-layout cols-1-2 response-settings">
+        <div>
+          <i className="fa fa-robot"></i>&nbsp;&nbsp;Model:
+        </div>
+        <div>
+          {response.modelSettingsSnapshot.modelName}
+        </div>
+
+        <div>
+          <i className="fa fa-hammer"></i>&nbsp;&nbsp;Task:
+        </div>
+        <div>
+          {response.modelSettingsSnapshot.templateName}
+        </div>
+
+        <div>
+          <i className="fa fa-tachometer-alt"></i>&nbsp;&nbsp;Creativeness:
+        </div>
+        <div>
+          {response.modelSettingsSnapshot.presetName}
+        </div>
+      </div>
+    }
     {response.messages.length !==0 && isPromptOpen && <ResponseMessage message={response.messages[0]} onContinueClicked={null} />}
     {response.messages.slice(1).map((m ,i) =>
       <ResponseMessage

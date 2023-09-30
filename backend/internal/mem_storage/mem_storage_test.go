@@ -56,23 +56,3 @@ func TestNewWriteRead(t *testing.T) {
 		t.Errorf("TestNewWriteRead failed. Expected '%s', got '%s'", "A test", session2.Title)
 	}
 }
-
-func TestNewResponseWriteRead(t *testing.T) {
-	tempDir := t.TempDir()
-	storage := New(tempDir)
-	session := storage.NewSession()
-	session.Title = "A test"
-
-	id := session.ID
-	response := storage.NewResponse(session)
-	storage.WriteSession(session)
-
-	session2 := storage.ReadSession(id)
-	if len(session2.Responses) != 1 {
-		t.Errorf("TestNewResponseWriteRead failed. Expected len(session2.Responses), got %d", len(session2.Responses))
-	}
-
-	if session2.Responses[0].ID != response.ID {
-		t.Errorf("TestNewResponseWriteRead failed. Expected to find our response struct.")
-	}
-}

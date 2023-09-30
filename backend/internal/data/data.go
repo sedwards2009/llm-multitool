@@ -34,6 +34,13 @@ type ModelSettings struct {
 	PresetID   string `json:"presetId"`
 }
 
+type ModelSettingsSnapshot struct {
+	ModelSettings
+	ModelName    string `json:"modelName"`
+	TemplateName string `json:"templateName"`
+	PresetName   string `json:"presetName"`
+}
+
 type ModelOverview struct {
 	Models []*Model `json:"models"`
 }
@@ -46,10 +53,11 @@ type Model struct {
 }
 
 type Response struct {
-	ID                string                        `json:"id"`
-	CreationTimestamp string                        `json:"creationTimestamp"`
-	Status            responsestatus.ResponseStatus `json:"status"`
-	Messages          []Message                     `json:"messages"`
+	ID                    string                        `json:"id"`
+	CreationTimestamp     string                        `json:"creationTimestamp"`
+	Status                responsestatus.ResponseStatus `json:"status"`
+	Messages              []Message                     `json:"messages"`
+	ModelSettingsSnapshot *ModelSettingsSnapshot        `json:"modelSettingsSnapshot"`
 }
 
 type Message struct {

@@ -275,7 +275,7 @@ func handleResponsePost(c *gin.Context) {
 	}
 
 	session.Title = templates.MakeTitle(session.ModelSettings.TemplateID, session.Prompt)
-	response := sessionStorage.NewResponse(session)
+	response := CreateNewResponse(session)
 
 	responseId := response.ID
 
@@ -394,7 +394,8 @@ func handleMessageContinuePost(c *gin.Context) {
 		sessionBroadcaster.Send(sessionId, "changed")
 	}
 
-	llmEngine.Enqueue(response.Messages, appendFunc, completeFunc, setStatusFunc, session.ModelSettings)
+	llmEngine.Enqueue(response.Messages, appendFunc, completeFunc, setStatusFunc,
+		&response.ModelSettingsSnapshot.ModelSettings)
 	c.JSON(http.StatusOK, response)
 }
 
@@ -512,6 +513,33 @@ func getResponseFromSessionByID(session *data.Session, responseID string) *data.
 func handlePresetOverviewGet(c *gin.Context) {
 	presetOverview := presetDatabase.PresetOverview()
 	c.JSON(http.StatusOK, presetOverview)
+}
+
+func CreateNewResponse(session *data.Session) *data.Response {
+	now := time.Now().UTC()
+
+	preset := presetDatabase.Get(session.ModelSettings.PresetID)
+	template := templates.Get(session.ModelSettings.TemplateID)
+	model := llmEngine.GetModel(session.ModelSettings.ModelID)
+
+	newResponse := &data.Response{
+		ID:                uuid.NewString(),
+		CreationTimestamp: now.Format(time.RFC3339),
+		Status:            responsestatus.Pending,
+		Messages:          []data.Message{},
+		ModelSettingsSnapshot: &data.ModelSettingsSnapshot{
+			ModelSettings: data.ModelSettings{
+				ModelID:    session.ModelSettings.ModelID,
+				PresetID:   session.ModelSettings.PresetID,
+				TemplateID: session.ModelSettings.TemplateID,
+			},
+			ModelName:    model.Name,
+			PresetName:   preset.Name,
+			TemplateName: template.Name,
+		},
+	}
+	session.Responses = append(session.Responses, newResponse)
+	return newResponse
 }
 
 func main() {

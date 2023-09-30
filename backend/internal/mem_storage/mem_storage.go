@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"sedwards2009/llm-workbench/internal/data"
-	"sedwards2009/llm-workbench/internal/data/responsestatus"
 	"sort"
 	"strings"
 	"sync"
@@ -146,10 +145,11 @@ func copyResponses(srcResponses []*data.Response) []*data.Response {
 
 func copyResponse(srcResponse *data.Response) *data.Response {
 	return &data.Response{
-		ID:                srcResponse.ID,
-		CreationTimestamp: srcResponse.CreationTimestamp,
-		Status:            srcResponse.Status,
-		Messages:          copyMessages(srcResponse.Messages),
+		ID:                    srcResponse.ID,
+		CreationTimestamp:     srcResponse.CreationTimestamp,
+		Status:                srcResponse.Status,
+		Messages:              copyMessages(srcResponse.Messages),
+		ModelSettingsSnapshot: copyModelSettingsSnapshot(srcResponse.ModelSettingsSnapshot),
 	}
 }
 
@@ -166,6 +166,22 @@ func copyModelSettings(settings *data.ModelSettings) *data.ModelSettings {
 		ModelID:    settings.ModelID,
 		PresetID:   settings.PresetID,
 		TemplateID: settings.TemplateID,
+	}
+}
+
+func copyModelSettingsSnapshot(snapshot *data.ModelSettingsSnapshot) *data.ModelSettingsSnapshot {
+	if snapshot == nil {
+		return nil
+	}
+	return &data.ModelSettingsSnapshot{
+		ModelSettings: data.ModelSettings{
+			ModelID:    snapshot.ModelSettings.ModelID,
+			PresetID:   snapshot.PresetID,
+			TemplateID: snapshot.TemplateID,
+		},
+		ModelName:    snapshot.ModelName,
+		PresetName:   snapshot.PresetName,
+		TemplateName: snapshot.TemplateName,
 	}
 }
 
@@ -250,16 +266,4 @@ func (this *SimpleStorage) writeToDisk(session *data.Session) {
 		log.Fatalf("Couldn't write Session object to '%s': %v", filePath, err)
 		panic(err)
 	}
-}
-
-func (this *SimpleStorage) NewResponse(session *data.Session) *data.Response {
-	now := time.Now().UTC()
-	newResponse := &data.Response{
-		ID:                uuid.NewString(),
-		CreationTimestamp: now.Format(time.RFC3339),
-		Status:            responsestatus.Pending,
-		Messages:          []data.Message{},
-	}
-	session.Responses = append(session.Responses, newResponse)
-	return newResponse
 }
