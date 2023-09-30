@@ -124,6 +124,13 @@ export function SessionEditor({sessionId, modelOverview, presetOverview, templat
     setSession(setSessionPreset(session as Session, presetId));
   };
 
+
+  const modelIDs: (string | null)[] = modelOverview.models.map(m => m.id);
+  const templateIDs: (string | null)[] = templateOverview.templates.map(t => t.id);
+  const presetIDs: (string | null)[] = presetOverview.presets.map(p => p.id);
+  const isSettingsValid = (modelIDs.includes(selectedModelId) && templateIDs.includes(selectedTemplateId)
+    && presetIDs.includes(selectedPresetId));
+
   return <div className="session-editor">
     {session == null && <div>Loading</div>}
     {session && <>
@@ -161,7 +168,13 @@ export function SessionEditor({sessionId, modelOverview, presetOverview, templat
               onChange={onPromptChange}
               onKeyDown={onKeyDown}
             />
-            <button className="compact small success" title="Shift+Enter" onClick={onSubmitClicked}>Send</button>
+            <button
+              className="compact small success"
+              title="Shift+Enter"
+              onClick={onSubmitClicked}
+              disabled={!isSettingsValid}>
+                Send
+            </button>
           </div>
         </div>
         <div className="session-response-pane">
