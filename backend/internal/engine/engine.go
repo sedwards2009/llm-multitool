@@ -5,6 +5,7 @@ import (
 	"sedwards2009/llm-workbench/internal/data"
 	"sedwards2009/llm-workbench/internal/data/responsestatus"
 	"sedwards2009/llm-workbench/internal/engine/config"
+	"sedwards2009/llm-workbench/internal/engine/ollama"
 	"sedwards2009/llm-workbench/internal/engine/openai"
 	"sedwards2009/llm-workbench/internal/engine/types"
 	"sedwards2009/llm-workbench/internal/presets"
@@ -61,9 +62,14 @@ func NewEngine(configFilePath string, presetDatabase *presets.PresetDatabase) *E
 	}
 
 	engine.engineBackends = []types.EngineBackend{}
-	for _, config := range backendConfigs {
-		backendInstance := openai.NewEngineBackend(config)
-		engine.engineBackends = append(engine.engineBackends, backendInstance)
+	for _, backendConfig := range backendConfigs {
+		if backendConfig.Variant != nil && *backendConfig.Variant == config.VARIANT_OLLAMA {
+			backendInstance := ollama.New(backendConfig)
+			engine.engineBackends = append(engine.engineBackends, backendInstance)
+		} else {
+			backendInstance := openai.New(backendConfig)
+			engine.engineBackends = append(engine.engineBackends, backendInstance)
+		}
 	}
 
 	go engine.worker(engine.toWorkerChan)
@@ -141,7 +147,7 @@ func (this *Engine) processWork(work *types.Request, done chan bool) {
 	}
 
 	preset := this.getPresetByID(work.ModelSettings.PresetID)
-	(*backend).Process(work, model, preset)
+	backend.Process(work, model, preset)
 }
 
 func (this *Engine) getModelByID(modelID string) *data.Model {
@@ -153,10 +159,10 @@ func (this *Engine) getModelByID(modelID string) *data.Model {
 	return nil
 }
 
-func (this *Engine) getBackendByID(backendID string) *types.EngineBackend {
+func (this *Engine) getBackendByID(backendID string) types.EngineBackend {
 	for _, backend := range this.engineBackends {
 		if backend.ID() == backendID {
-			return &backend
+			return backend
 		}
 	}
 	return nil

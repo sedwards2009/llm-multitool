@@ -10,6 +10,7 @@ import (
 )
 
 const VARIANT_OOBABOOGA = "oobabooga"
+const VARIANT_OLLAMA = "ollama"
 
 type EngineBackendConfig struct {
 	Name         string  `yaml:"name"`
@@ -39,7 +40,7 @@ func ReadConfigFile(file string) ([]*EngineBackendConfig, error) {
 func checkVariantFields(backendConfigs *[]*EngineBackendConfig) {
 	for _, config := range *backendConfigs {
 		if config.Variant != nil {
-			if *config.Variant != VARIANT_OOBABOOGA {
+			if *config.Variant != VARIANT_OOBABOOGA && *config.Variant != VARIANT_OLLAMA {
 				fmt.Printf("Error reading backend config file. Found unknown variant '%s'.\n", *config.Variant)
 				config.Variant = nil
 			}

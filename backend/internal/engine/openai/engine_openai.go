@@ -22,8 +22,8 @@ type OpenAiEngineBackend struct {
 	isDefault bool
 }
 
-func NewEngineBackend(config *config.EngineBackendConfig) OpenAiEngineBackend {
-	return OpenAiEngineBackend{
+func New(config *config.EngineBackendConfig) *OpenAiEngineBackend {
+	return &OpenAiEngineBackend{
 		id:        config.Name,
 		config:    config,
 		isDefault: config.Default,
@@ -40,17 +40,18 @@ func (this *OpenAiEngineBackend) formatApiConfig() openai.ClientConfig {
 	return apiConfig
 }
 
-func (this OpenAiEngineBackend) ID() string {
+func (this *OpenAiEngineBackend) ID() string {
 	return this.id
 }
 
-func (this OpenAiEngineBackend) IsDefault() bool {
+func (this *OpenAiEngineBackend) IsDefault() bool {
 	return this.isDefault
 }
 
-func (this OpenAiEngineBackend) Process(work *types.Request, model *data.Model, preset *data.Preset) {
-	log.Printf("processOpenAI(): Starting request")
+func (this *OpenAiEngineBackend) Process(work *types.Request, model *data.Model, preset *data.Preset) {
+	log.Printf("OpenAiEngineBackend process(): Starting request")
 	work.SetStatusFunc(responsestatus.Running)
+	defer work.CompleteFunc()
 
 	c := openai.NewClientWithConfig(this.formatApiConfig())
 	ctx := context.Background()
@@ -75,8 +76,7 @@ func (this OpenAiEngineBackend) Process(work *types.Request, model *data.Model, 
 	}
 	stream, err := c.CreateChatCompletionStream(ctx, req)
 	if err != nil {
-		log.Printf("processOpenAI(): ChatCompletionStream error: %v\n", err)
-		work.CompleteFunc()
+		log.Printf("OpenAiEngineBackend process(): ChatCompletionStream error: %v\n", err)
 		return
 	}
 	defer stream.Close()
@@ -88,7 +88,7 @@ func (this OpenAiEngineBackend) Process(work *types.Request, model *data.Model, 
 		}
 
 		if err != nil {
-			log.Printf("processOpenAI(): ChatCompletionStream error: %v\n", err)
+			log.Printf("OpenAiEngineBackend process(): ChatCompletionStream error: %v\n", err)
 			work.SetStatusFunc(responsestatus.Error)
 			break
 		}
@@ -97,11 +97,10 @@ func (this OpenAiEngineBackend) Process(work *types.Request, model *data.Model, 
 		}
 	}
 	work.SetStatusFunc(responsestatus.Done)
-	log.Printf("processOpenAI(): ChatCompletionStream completed")
-	work.CompleteFunc()
+	log.Printf("OpenAiEngineBackend process(): ChatCompletionStream completed")
 }
 
-func (this OpenAiEngineBackend) ScanModels() []*data.Model {
+func (this *OpenAiEngineBackend) ScanModels() []*data.Model {
 	c := openai.NewClientWithConfig(this.formatApiConfig())
 	ctx := context.Background()
 
@@ -109,7 +108,7 @@ func (this OpenAiEngineBackend) ScanModels() []*data.Model {
 
 	modelList, err := c.ListModels(ctx)
 	if err != nil {
-		log.Printf("ScanModels: Error: %v\n", err)
+		log.Printf("OpenAiEngineBackend ScanModels(): Error: %v\n", err)
 		return []*data.Model{}
 	}
 
