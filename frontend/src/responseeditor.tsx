@@ -86,15 +86,20 @@ export function ResponseEditor({response, modelOverview, presetOverview, templat
         </div>
       </div>
     }
-    {response.messages.length !==0 && isPromptOpen && <ResponseMessage message={response.messages[0]} onContinueClicked={null} />}
+    {response.messages.length !==0 && isPromptOpen &&
+      <ResponseMessage
+        message={response.messages[0]}
+        onContinueClicked={null}
+      />
+    }
     {response.messages.slice(1).map((m ,i) =>
       <ResponseMessage
         key={m.id}
         message={m}
-        onContinueClicked={response.messages.length-1 === i+1 ? onContinueClicked : null}
+        onContinueClicked={response.status === "Done" && response.messages.length-1 === i+1 ? onContinueClicked : null}
       />
     )}
-    {isSendEnabled &&
+    {isSendEnabled && response.status === "Done" &&
       <div className="response-message">
         <div className="response-message-gutter"><i className="fas fa-user"></i></div>
         <div className="response-message-text gui-packed-row">
