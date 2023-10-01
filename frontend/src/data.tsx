@@ -39,9 +39,12 @@ export interface Response {
 }
 
 export interface ModelSettingsSnapshot {
-	modelName: string;
-	templateName: string;
-	presetName: string;
+  modelId: string | null;
+  templateId: string | null;
+  presetId: string | null;
+  modelName: string;
+  templateName: string;
+  presetName: string;
 }
 
 export type Role = "User" | "Assistant";
@@ -77,4 +80,19 @@ export interface Preset {
 
 export interface PresetOverview {
   presets: Preset[];
+}
+
+export function isSettingsValid(
+    modelOverview: ModelOverview,
+    presetOverview: PresetOverview,
+    templateOverview: TemplateOverview,
+    selectedModelId: string | null,
+    selectedPresetId: string | null,
+    selectedTemplateId: string | null
+): boolean {
+  const modelIDs: (string | null)[] = modelOverview.models.map(m => m.id);
+  const templateIDs: (string | null)[] = templateOverview.templates.map(t => t.id);
+  const presetIDs: (string | null)[] = presetOverview.presets.map(p => p.id);
+  return (modelIDs.includes(selectedModelId) && templateIDs.includes(selectedTemplateId)
+    && presetIDs.includes(selectedPresetId));
 }

@@ -1,5 +1,5 @@
 import { ChangeEvent, KeyboardEventHandler, useEffect, useState } from "react";
-import { ModelOverview, PresetOverview, Session, TemplateOverview } from "./data";
+import { ModelOverview, PresetOverview, Session, TemplateOverview, isSettingsValid } from "./data";
 import { navigate } from "raviger";
 import TextareaAutosize from "react-textarea-autosize";
 import { loadSession, newResponse, setSessionPrompt, deleteResponse, SessionMonitor, SessionMonitorState,
@@ -124,13 +124,8 @@ export function SessionEditor({sessionId, modelOverview, presetOverview, templat
     setSession(setSessionPreset(session as Session, presetId));
   };
 
-
-  const modelIDs: (string | null)[] = modelOverview.models.map(m => m.id);
-  const templateIDs: (string | null)[] = templateOverview.templates.map(t => t.id);
-  const presetIDs: (string | null)[] = presetOverview.presets.map(p => p.id);
-  const isSettingsValid = (modelIDs.includes(selectedModelId) && templateIDs.includes(selectedTemplateId)
-    && presetIDs.includes(selectedPresetId));
-
+  const isSendEnabled = isSettingsValid(modelOverview, presetOverview, templateOverview, selectedModelId,
+    selectedPresetId, selectedTemplateId);
   return <div className="session-editor">
     {session == null && <div>Loading</div>}
     {session && <>
@@ -172,7 +167,7 @@ export function SessionEditor({sessionId, modelOverview, presetOverview, templat
               className="compact small success"
               title="Shift+Enter"
               onClick={onSubmitClicked}
-              disabled={!isSettingsValid}>
+              disabled={!isSendEnabled}>
                 Send
             </button>
           </div>
@@ -182,6 +177,9 @@ export function SessionEditor({sessionId, modelOverview, presetOverview, templat
             [...session.responses].reverse().map(r => <ResponseEditor
               response={r}
               key={r.id}
+              modelOverview={modelOverview}
+              presetOverview={presetOverview}
+              templateOverview={templateOverview}
               onDeleteClicked={() => onDeleteClicked(r.id)}
               onReplySubmit={text => onReplySubmit(r.id, text)}
               onContinueClicked={() => onContinueClicked(r.id)}

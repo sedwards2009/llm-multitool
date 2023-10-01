@@ -1,4 +1,4 @@
-import { Response } from "./data";
+import { ModelOverview, PresetOverview, Response, TemplateOverview, isSettingsValid } from "./data";
 import { ChangeEvent, KeyboardEventHandler, useState } from "react";
 import classNames from "classnames";
 import { ResponseMessage } from "./responsemessage";
@@ -6,12 +6,17 @@ import TextareaAutosize from "react-textarea-autosize";
 
 export interface Props {
   response: Response;
+  modelOverview: ModelOverview;
+  presetOverview: PresetOverview;
+  templateOverview: TemplateOverview;
   onDeleteClicked: () => void;
   onReplySubmit: (replyText: string) => void;
   onContinueClicked: () => void;
 }
 
-export function ResponseEditor({response, onContinueClicked, onDeleteClicked, onReplySubmit: onReply}: Props): JSX.Element {
+export function ResponseEditor({response, modelOverview, presetOverview, templateOverview,
+    onContinueClicked, onDeleteClicked, onReplySubmit: onReply}: Props): JSX.Element {
+
   const [isPromptOpen, setIsPromptOpen] = useState<boolean>(false);
   const [reply, setReply] = useState<string>("");
 
@@ -35,6 +40,16 @@ export function ResponseEditor({response, onContinueClicked, onDeleteClicked, on
     onReply(reply);
     setReply("");
   };
+
+  let isSendEnabled = false;
+  if (response.modelSettingsSnapshot != null) {
+    const selectedModelId = response.modelSettingsSnapshot.modelId;
+    const selectedPresetId = response.modelSettingsSnapshot.presetId;
+    const selectedTemplateId = response.modelSettingsSnapshot.templateId;
+    isSendEnabled = isSettingsValid(modelOverview, presetOverview, templateOverview, selectedModelId,
+      selectedPresetId, selectedTemplateId);
+  }
+  console.log(`isSendEnabled: ${isSendEnabled}`);
 
   return <div className="card">
     <h3>Response</h3>
@@ -79,17 +94,19 @@ export function ResponseEditor({response, onContinueClicked, onDeleteClicked, on
         onContinueClicked={response.messages.length-1 === i+1 ? onContinueClicked : null}
       />
     )}
-    <div className="response-message">
-      <div className="response-message-gutter"><i className="fas fa-user"></i></div>
-      <div className="response-message-text gui-packed-row">
-        <TextareaAutosize
-              className="expand"
-              value={reply}
-              onChange={onReplyChange}
-              onKeyDown={onReplyKeyDown}
-        />
-        <button className="compact small success" title="Shift+Enter" onClick={onReplyClicked}>Send</button>
+    {isSendEnabled &&
+      <div className="response-message">
+        <div className="response-message-gutter"><i className="fas fa-user"></i></div>
+        <div className="response-message-text gui-packed-row">
+          <TextareaAutosize
+                className="expand"
+                value={reply}
+                onChange={onReplyChange}
+                onKeyDown={onReplyKeyDown}
+          />
+          <button className="compact small success" title="Shift+Enter" onClick={onReplyClicked}>Send</button>
+        </div>
       </div>
-    </div>
+    }
   </div>;
 }
