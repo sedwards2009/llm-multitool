@@ -96,7 +96,7 @@ export function ResponseEditor({response, modelOverview, presetOverview, templat
       <ResponseMessage
         key={m.id}
         message={m}
-        onContinueClicked={response.status === "Done" && response.messages.length-1 === i+1 ? onContinueClicked : null}
+        onContinueClicked={isSendEnabled && response.status === "Done" && response.messages.length-1 === i+1 ? onContinueClicked : null}
       />
     )}
     {isSendEnabled && response.status === "Done" &&
