@@ -28,13 +28,23 @@ export function SettingsPage({ modelOverview, rescanModels }: Props): JSX.Elemen
       <h2>Settings</h2>
 
       <h3>Models</h3>
-      <ul>
+      <table>
+        <thead>
+          <th>Model</th>
+          <th>Supports Continue</th>
+          <th>Supports Replies</th>
+        </thead>
       {
         modelOverview.models.map(m => {
-          return <li key={m.id}>{m.name}</li>
+          return <tr key={m.id}>
+            <td>{m.name}</td>
+            <td>{m.supportsContinue ? "Yes" : "No"}</td>
+            <td>{m.supportsReply ? "Yes" : "No"}</td>
+          </tr>;
         })
       }
-      </ul>
+      </table>
+
       <button className="success" onClick={onRescanClicked} disabled={isScanning}>
         { isScanning && <i className="fas fa-spinner fa-spin"></i>}
         {" Scan Models"}

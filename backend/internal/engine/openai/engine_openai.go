@@ -131,10 +131,12 @@ func (this *OpenAiEngineBackend) ScanModels() []*data.Model {
 		}
 
 		result = append(result, &data.Model{
-			ID:              this.id + "_" + modelInfo.ID,
-			Name:            this.id + " - " + modelInfo.ID,
-			EngineID:        this.id,
-			InternalModelID: modelInfo.ID,
+			ID:               this.id + "_" + modelInfo.ID,
+			Name:             this.id + " - " + modelInfo.ID,
+			EngineID:         this.id,
+			InternalModelID:  modelInfo.ID,
+			SupportsContinue: true,
+			SupportsReply:    true,
 		})
 
 		if this.config.Variant != nil && *this.config.Variant == config.VARIANT_OOBABOOGA {

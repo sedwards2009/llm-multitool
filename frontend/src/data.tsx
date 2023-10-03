@@ -58,6 +58,8 @@ export interface Message {
 export interface Model {
   id: string;
   name: string;
+  supportsContinue: boolean;
+  supportsReply: boolean;
 }
 
 export interface ModelOverview {
@@ -95,4 +97,16 @@ export function isSettingsValid(
   const presetIDs: (string | null)[] = presetOverview.presets.map(p => p.id);
   return (modelIDs.includes(selectedModelId) && templateIDs.includes(selectedTemplateId)
     && presetIDs.includes(selectedPresetId));
+}
+
+export function getModelById(modelOverview: ModelOverview, modelId: string | null): Model | null {
+  if (modelId == null) {
+    return null;
+  }
+  for (const m of modelOverview.models) {
+    if (m.id === modelId) {
+      return m;
+    }
+  }
+  return null;
 }

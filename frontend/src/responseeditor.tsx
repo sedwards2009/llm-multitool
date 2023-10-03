@@ -1,4 +1,4 @@
-import { ModelOverview, PresetOverview, Response, TemplateOverview, isSettingsValid } from "./data";
+import { Model, ModelOverview, PresetOverview, Response, TemplateOverview, getModelById, isSettingsValid } from "./data";
 import { ChangeEvent, KeyboardEventHandler, useState } from "react";
 import classNames from "classnames";
 import { ResponseMessage } from "./responsemessage";
@@ -42,13 +42,20 @@ export function ResponseEditor({response, modelOverview, presetOverview, templat
   };
 
   let isSendEnabled = false;
+  let model: Model | null = null;
+  let supportsContinue = false;
   if (response.modelSettingsSnapshot != null) {
     const selectedModelId = response.modelSettingsSnapshot.modelId;
+    model = getModelById(modelOverview, selectedModelId);
+
     const selectedPresetId = response.modelSettingsSnapshot.presetId;
     const selectedTemplateId = response.modelSettingsSnapshot.templateId;
-    isSendEnabled = isSettingsValid(modelOverview, presetOverview, templateOverview, selectedModelId,
+    isSendEnabled = (model?.supportsReply === true) && isSettingsValid(modelOverview, presetOverview, templateOverview, selectedModelId,
       selectedPresetId, selectedTemplateId);
+
+    supportsContinue = model?.supportsContinue === true;
   }
+
   console.log(`isSendEnabled: ${isSendEnabled}`);
 
   return <div className="card">
@@ -96,7 +103,8 @@ export function ResponseEditor({response, modelOverview, presetOverview, templat
       <ResponseMessage
         key={m.id}
         message={m}
-        onContinueClicked={isSendEnabled && response.status === "Done" && response.messages.length-1 === i+1 ? onContinueClicked : null}
+        onContinueClicked={supportsContinue && isSendEnabled && response.status === "Done" &&
+          response.messages.length-1 === i+1 ? onContinueClicked : null}
       />
     )}
     {isSendEnabled && response.status === "Done" &&

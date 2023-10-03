@@ -150,10 +150,12 @@ func (this *OllamaEngineBackend) ScanModels() []*data.Model {
 	result := []*data.Model{}
 	for _, modelInfo := range modelList.Models {
 		result = append(result, &data.Model{
-			ID:              this.id + "_" + modelInfo.Name,
-			Name:            this.id + " - " + modelInfo.Name,
-			EngineID:        this.id,
-			InternalModelID: modelInfo.Name,
+			ID:               this.id + "_" + modelInfo.Name,
+			Name:             this.id + " - " + modelInfo.Name,
+			EngineID:         this.id,
+			InternalModelID:  modelInfo.Name,
+			SupportsContinue: false,
+			SupportsReply:    false,
 		})
 	}
 	return result

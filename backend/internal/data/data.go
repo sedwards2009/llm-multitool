@@ -46,10 +46,12 @@ type ModelOverview struct {
 }
 
 type Model struct {
-	ID              string `json:"id"`
-	Name            string `json:"name"`
-	EngineID        string
-	InternalModelID string
+	ID               string `json:"id"`
+	Name             string `json:"name"`
+	EngineID         string
+	InternalModelID  string
+	SupportsContinue bool `json:"supportsContinue"`
+	SupportsReply    bool `json:"supportsReply"`
 }
 
 type Response struct {
