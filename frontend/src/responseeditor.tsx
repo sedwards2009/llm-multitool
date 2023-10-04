@@ -9,13 +9,14 @@ export interface Props {
   modelOverview: ModelOverview;
   presetOverview: PresetOverview;
   templateOverview: TemplateOverview;
+  onAbortClicked: () => void;
+  onContinueClicked: () => void;
   onDeleteClicked: () => void;
   onReplySubmit: (replyText: string) => void;
-  onContinueClicked: () => void;
 }
 
 export function ResponseEditor({response, modelOverview, presetOverview, templateOverview,
-    onContinueClicked, onDeleteClicked, onReplySubmit: onReply}: Props): JSX.Element {
+    onAbortClicked, onContinueClicked, onDeleteClicked, onReplySubmit: onReply}: Props): JSX.Element {
 
   const [isPromptOpen, setIsPromptOpen] = useState<boolean>(false);
   const [reply, setReply] = useState<string>("");
@@ -56,14 +57,19 @@ export function ResponseEditor({response, modelOverview, presetOverview, templat
     supportsContinue = model?.supportsContinue === true;
   }
 
-  console.log(`isSendEnabled: ${isSendEnabled}`);
-
   return <div className="card">
     <h3>Response</h3>
     <div className="controls">
+      { response.status === "Running" &&
+          <>
+            <button className="microtool warning" onClick={onAbortClicked}><i className="far fa-stop-circle"></i></button>
+            &nbsp;
+            <span className="badge success">Running</span>
+          </>
+      }
       { response.status === "Pending" && <span className="badge warning">Pending</span>}
-      { response.status === "Running" && <span className="badge success">Running</span>}
       { response.status === "Error" && <span className="badge danger">Error</span>}
+      { response.status === "Aborted" && <span className="badge warning">Aborted</span>}
       <button className="microtool danger" onClick={onDeleteClicked}><i className="fa fa-times"></i></button>
     </div>
     {response.messages.length !==0 &&

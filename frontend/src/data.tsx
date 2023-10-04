@@ -28,7 +28,7 @@ export interface ModelSettings {
   presetId: string;
 }
 
-export type ResponseStatus = "Done" | "Pending" | "Running" | "Error";
+export type ResponseStatus = "Done" | "Pending" | "Running" | "Error" | "Aborted";
 
 export interface Response {
   id: string;

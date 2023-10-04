@@ -3,7 +3,7 @@ import { ModelOverview, PresetOverview, Session, TemplateOverview, isSettingsVal
 import { navigate } from "raviger";
 import TextareaAutosize from "react-textarea-autosize";
 import { loadSession, newResponse, setSessionPrompt, deleteResponse, SessionMonitor, SessionMonitorState,
-  setSessionModel, newMessage, setSessionTemplate, setSessionPreset, continueMessage } from "./dataloading";
+  setSessionModel, newMessage, setSessionTemplate, setSessionPreset, continueMessage, abortResponse } from "./dataloading";
 import { ResponseEditor } from "./responseeditor";
 import { ModelSettings } from "./modelsettings";
 
@@ -81,6 +81,13 @@ export function SessionEditor({sessionId, modelOverview, presetOverview, templat
   const onTemplateChange = (templateId: string) => {
     setSelectedTemplateId(templateId);
     setSession(setSessionTemplate(session as Session, templateId));
+  };
+
+  const onAbortClicked = (responseId: string) => {
+    (async () => {
+      await abortResponse((session as Session).id, responseId);
+      await loadSessionData();
+    })();
   };
 
   const onDeleteClicked = (responseId: string) => {
@@ -180,6 +187,7 @@ export function SessionEditor({sessionId, modelOverview, presetOverview, templat
               modelOverview={modelOverview}
               presetOverview={presetOverview}
               templateOverview={templateOverview}
+              onAbortClicked={() => onAbortClicked(r.id)}
               onDeleteClicked={() => onDeleteClicked(r.id)}
               onReplySubmit={text => onReplySubmit(r.id, text)}
               onContinueClicked={() => onContinueClicked(r.id)}

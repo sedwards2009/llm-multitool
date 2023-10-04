@@ -20,11 +20,12 @@ func _() {
 	_ = x[Pending-2]
 	_ = x[Running-3]
 	_ = x[Error-4]
+	_ = x[Aborted-5]
 }
 
-const _ResponseStatus_name = "DonePendingRunningError"
+const _ResponseStatus_name = "DonePendingRunningErrorAborted"
 
-var _ResponseStatus_index = [...]uint8{0, 4, 11, 18, 23}
+var _ResponseStatus_index = [...]uint8{0, 4, 11, 18, 23, 30}
 
 func _() {
 	var _nil_ResponseStatus_value = func() (val ResponseStatus) { return }()
@@ -48,13 +49,14 @@ func (i ResponseStatus) New() *ResponseStatus {
 	return &clone
 }
 
-var _ResponseStatus_values = []ResponseStatus{1, 2, 3, 4}
+var _ResponseStatus_values = []ResponseStatus{1, 2, 3, 4, 5}
 
 var _ResponseStatus_name_to_values = map[string]ResponseStatus{
 	_ResponseStatus_name[0:4]:   1,
 	_ResponseStatus_name[4:11]:  2,
 	_ResponseStatus_name[11:18]: 3,
 	_ResponseStatus_name[18:23]: 4,
+	_ResponseStatus_name[23:30]: 5,
 }
 
 // ParseResponseStatusString retrieves an enum value from the enum constants string name.

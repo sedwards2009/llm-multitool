@@ -7,6 +7,7 @@ const (
 	Pending
 	Running
 	Error
+	Aborted
 )
 
 //go:generate go-enum -type=ResponseStatus

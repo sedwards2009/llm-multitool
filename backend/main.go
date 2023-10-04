@@ -87,6 +87,7 @@ func setupRouter() *gin.Engine {
 	r.PUT("/api/session/:sessionId/modelSettings", handleSessionModelSettingsPut)
 	r.POST("/api/session/:sessionId/response/:responseId/message", handleNewMessagePost)
 	r.POST("/api/session/:sessionId/response/:responseId/continue", handleMessageContinuePost)
+	r.POST("/api/session/:sessionId/response/:responseId/abort", handleResponseAbortPost)
 	r.GET("/api/template", handleTemplateOverviewGet)
 	r.GET("/api/preset", handlePresetOverviewGet)
 
@@ -294,6 +295,15 @@ func handleResponsePost(c *gin.Context) {
 	sessionStorage.WriteSession(session)
 
 	appendFunc := func(text string) bool {
+		isAborted := false
+		editResponse(sessionId, responseId, func(s *data.Session, r *data.Response) bool {
+			isAborted = r.Status == responsestatus.Aborted
+			return false
+		})
+		if isAborted {
+			return false
+		}
+
 		success := appendToLastMessage(sessionId, responseId, text)
 		sessionBroadcaster.Send(sessionId, "changed")
 		return success
@@ -305,6 +315,9 @@ func handleResponsePost(c *gin.Context) {
 
 	setStatusFunc := func(status responsestatus.ResponseStatus) {
 		editResponse(sessionId, responseId, func(session *data.Session, response *data.Response) bool {
+			if response.Status == responsestatus.Aborted {
+				return false
+			}
 			response.Status = status
 			return true
 		})
@@ -377,6 +390,15 @@ func handleMessageContinuePost(c *gin.Context) {
 	}
 
 	appendFunc := func(text string) bool {
+		isAborted := false
+		editResponse(sessionId, responseId, func(s *data.Session, r *data.Response) bool {
+			isAborted = r.Status == responsestatus.Aborted
+			return false
+		})
+		if isAborted {
+			return false
+		}
+
 		success := appendToLastMessage(sessionId, responseId, text)
 		sessionBroadcaster.Send(sessionId, "changed")
 		return success
@@ -388,6 +410,9 @@ func handleMessageContinuePost(c *gin.Context) {
 
 	setStatusFunc := func(status responsestatus.ResponseStatus) {
 		editResponse(sessionId, responseId, func(session *data.Session, response *data.Response) bool {
+			if response.Status == responsestatus.Aborted {
+				return false
+			}
 			response.Status = status
 			return true
 		})
@@ -397,6 +422,33 @@ func handleMessageContinuePost(c *gin.Context) {
 	llmEngine.Enqueue(response.Messages, appendFunc, completeFunc, setStatusFunc,
 		&response.ModelSettingsSnapshot.ModelSettings)
 	c.JSON(http.StatusOK, response)
+}
+
+func handleResponseAbortPost(c *gin.Context) {
+	sessionId := c.Params.ByName("sessionId")
+	session := sessionStorage.ReadSession(sessionId)
+	if session == nil {
+		c.String(http.StatusNotFound, "Session not found")
+		return
+	}
+
+	responseId := c.Params.ByName("responseId")
+	response := getResponseFromSessionByID(session, responseId)
+	if response == nil {
+		c.String(http.StatusNotFound, "Response not found")
+		return
+	}
+
+	if response.Status != responsestatus.Running {
+		c.Status(http.StatusPreconditionFailed)
+		return
+	}
+
+	response.Status = responsestatus.Aborted
+	sessionStorage.WriteSession(session)
+	sessionBroadcaster.Send(sessionId, "changed")
+
+	c.Status(http.StatusNoContent)
 }
 
 func handleModelOverviewGet(c *gin.Context) {

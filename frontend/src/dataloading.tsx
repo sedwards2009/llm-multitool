@@ -171,6 +171,13 @@ export async function newResponse(session: Session): Promise<Response | null> {
   return null;
 }
 
+export async function abortResponse(sessionId: string, responseId: string): Promise<boolean> {
+  await flushQueues();
+
+  const response = await fetch(`${SERVER_BASE_URL}/session/${sessionId}/response/${responseId}/abort`, {method: "POST"});
+  return response.ok;
+}
+
 export async function deleteResponse(sessionId: string, responseId: string): Promise<boolean> {
   await flushQueues();
 
