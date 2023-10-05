@@ -219,22 +219,42 @@ func (this *SimpleStorage) WriteSession(session *data.Session) {
 	this.writeChan <- sessionCopy
 }
 
+type SessionDeadline struct {
+	deadline time.Time
+	session  *data.Session
+}
+
+const WRITE_BACK_DELAY = 3 * time.Second
+
 /*
  * Goroutine which receives Sessions to save and writes them back to disk.
  */
 func (this *SimpleStorage) writer(workChan chan *data.Session) {
-	workPool := make(map[string]*data.Session)
+	workPool := make(map[string]SessionDeadline)
+
+	setSession := func(session *data.Session) {
+		deadlineSession, ok := workPool[session.ID]
+		if ok {
+			deadlineSession.session = session
+			workPool[session.ID] = deadlineSession
+		} else {
+			workPool[session.ID] = SessionDeadline{deadline: time.Now().Add(WRITE_BACK_DELAY), session: session}
+		}
+	}
 
 	for {
-		session := <-workChan
-		workPool[session.ID] = session
-		log.Printf("Received %s for writing\n", session.ID)
+		timeout := time.After(1 * time.Second)
+		select {
+		case session := <-workChan:
+			setSession(session)
+		case <-timeout:
+			break
+		}
 
 		for {
 			select {
 			case session := <-workChan:
-				workPool[session.ID] = session
-				log.Printf("Received %s for writing\n", session.ID)
+				setSession(session)
 			default:
 				break
 			}
@@ -243,11 +263,14 @@ func (this *SimpleStorage) writer(workChan chan *data.Session) {
 				break
 			}
 
-			for _, s := range workPool {
-				log.Printf("Writing %s\n", s.ID)
-				this.writeToDisk(s)
-				delete(workPool, s.ID)
-				break
+			now := time.Now()
+			for _, deadlineSession := range workPool {
+				if now.After(deadlineSession.deadline) {
+					log.Printf("Writing %s back to disk.\n", deadlineSession.session.ID)
+					this.writeToDisk(deadlineSession.session)
+					delete(workPool, deadlineSession.session.ID)
+					break
+				}
 			}
 		}
 	}
