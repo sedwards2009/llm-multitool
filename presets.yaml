@@ -15,3 +15,7 @@
   id: creative
   temperature: 0.7
   top_p: 0.8
+- name: Brain storm
+  id: brain_storm
+  temperature: 2.0
+  top_p: 0.99
