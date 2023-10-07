@@ -25,7 +25,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-//go:embed resources/*
+//go:embed resources/* config/*
 var staticFS embed.FS
 
 var logger gin.HandlerFunc = nil
@@ -44,11 +44,29 @@ func setupEngine(configPath string, presetDatabase *presets.PresetDatabase) *eng
 }
 
 func setupTemplates(templatesPath string) *template.TemplateDatabase {
-	return template.NewTemplateDatabase(templatesPath)
+	if templatesPath != "" {
+		presetDatabase, err := template.MakeTemplateDatabase(templatesPath)
+		if err == nil {
+			return presetDatabase
+		}
+	}
+
+	contents, _ := staticFS.ReadFile("config/templates.yaml")
+	templateDatabase, _ := template.MakeTemplateDatabaseFromBytes(contents, "(internal)")
+	return templateDatabase
 }
 
 func setupPresets(presetsPath string) *presets.PresetDatabase {
-	return presets.MakePresetDatabase(presetsPath)
+	if presetsPath != "" {
+		presetDatabase, err := presets.MakePresetDatabase(presetsPath)
+		if err == nil {
+			return presetDatabase
+		}
+	}
+
+	contents, _ := staticFS.ReadFile("config/presets.yaml")
+	presetDatabase, _ := presets.MakePresentDatabaseFromBytes(contents, "(internal)")
+	return presetDatabase
 }
 
 func setupBroadcaster() *broadcaster.Broadcaster {

@@ -2,7 +2,6 @@ package template
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"sedwards2009/llm-workbench/internal/data"
 	"strings"
@@ -19,25 +18,25 @@ const PROMPT_PARAM = "{{prompt}}"
 
 const TITLE_LENGTH = 40
 
-func NewTemplateDatabase(file string) *TemplateDatabase {
+func MakeTemplateDatabase(fileName string) (*TemplateDatabase, error) {
+	fileContents, err := os.ReadFile(fileName)
+	if err != nil {
+		return nil, fmt.Errorf("Cannot read templates file '%s': %w", fileName, err)
+	}
+	return MakeTemplateDatabaseFromBytes(fileContents, fileName)
+}
 
+func MakeTemplateDatabaseFromBytes(yamlBytes []byte, fileName string) (*TemplateDatabase, error) {
 	this := &TemplateDatabase{
 		templates: make([]*data.Template, 0),
 	}
-	err := this.readTemplatesFile(file)
-	if err != nil {
-		log.Print(err)
-	}
-	return this
+	err := this.readTemplatesYamlString(yamlBytes, fileName)
+	return this, err
 }
 
-func (this *TemplateDatabase) readTemplatesFile(file string) error {
-	f, err := os.ReadFile(file)
-	if err != nil {
-		return fmt.Errorf("Cannot read templates file '%s': %w", file, err)
-	}
-	if err := yaml.Unmarshal(f, &this.templates); err != nil {
-		return fmt.Errorf("Cannot unmarshal config file '%s': %w", file, err)
+func (this *TemplateDatabase) readTemplatesYamlString(yamlContent []byte, fileName string) error {
+	if err := yaml.Unmarshal(yamlContent, &this.templates); err != nil {
+		return fmt.Errorf("Cannot unmarshal config file '%s': %w", fileName, err)
 	}
 	return nil
 }

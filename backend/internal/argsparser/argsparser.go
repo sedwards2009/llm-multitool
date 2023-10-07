@@ -36,13 +36,13 @@ func Parse() *CommandLineArguments {
 		&argparse.Options{
 			Required: false,
 			Help:     "Path to the file containing generation parameter presets",
-			Default:  "presets.yaml"})
+			Default:  ""})
 
 	templatesPath := parser.String("t", "templates",
 		&argparse.Options{
 			Required: false,
 			Help:     "Path to the file containing templates",
-			Default:  "templates.yaml"})
+			Default:  ""})
 
 	address := parser.String("a", "address",
 		&argparse.Options{
