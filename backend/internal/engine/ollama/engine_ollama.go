@@ -45,18 +45,13 @@ type generateResponse struct {
 
 func New(config *config.EngineBackendConfig) *OllamaEngineBackend {
 	return &OllamaEngineBackend{
-		id:        config.Name,
-		config:    config,
-		isDefault: config.Default,
+		id:     config.Name,
+		config: config,
 	}
 }
 
 func (this *OllamaEngineBackend) ID() string {
 	return this.id
-}
-
-func (this *OllamaEngineBackend) IsDefault() bool {
-	return this.isDefault
 }
 
 func (this *OllamaEngineBackend) Process(work *types.Request, model *data.Model, preset *data.Preset) {

@@ -44,7 +44,6 @@ type scanModelsPayload struct {
 }
 
 func NewEngine(configFilePath string, presetDatabase *presets.PresetDatabase) *Engine {
-
 	backendConfigs, err := config.ReadConfigFile(configFilePath)
 	if err != nil {
 		log.Print(err)
@@ -239,15 +238,8 @@ func (this *Engine) ScanModels() {
 }
 
 func (this *Engine) DefaultID() string {
-	for _, engineBackend := range this.engineBackends {
-		if engineBackend.IsDefault() {
-			engineBackendID := engineBackend.ID()
-			for _, model := range this.models {
-				if model.EngineID == engineBackendID {
-					return model.ID
-				}
-			}
-		}
+	for _, model := range this.models {
+		return model.ID
 	}
 	return ""
 }

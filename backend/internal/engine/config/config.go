@@ -19,7 +19,6 @@ type EngineBackendConfig struct {
 	ApiToken     string
 	Models       *[]string `yaml:"models"`
 	Variant      *string   `yaml:"variant"`
-	Default      bool      `yaml:"default,omitempty"`
 }
 
 func ReadConfigFile(file string) ([]*EngineBackendConfig, error) {

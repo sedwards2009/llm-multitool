@@ -17,16 +17,14 @@ import (
 )
 
 type OpenAiEngineBackend struct {
-	id        string
-	config    *config.EngineBackendConfig
-	isDefault bool
+	id     string
+	config *config.EngineBackendConfig
 }
 
 func New(config *config.EngineBackendConfig) *OpenAiEngineBackend {
 	return &OpenAiEngineBackend{
-		id:        config.Name,
-		config:    config,
-		isDefault: config.Default,
+		id:     config.Name,
+		config: config,
 	}
 }
 
@@ -42,10 +40,6 @@ func (this *OpenAiEngineBackend) formatApiConfig() openai.ClientConfig {
 
 func (this *OpenAiEngineBackend) ID() string {
 	return this.id
-}
-
-func (this *OpenAiEngineBackend) IsDefault() bool {
-	return this.isDefault
 }
 
 func (this *OpenAiEngineBackend) Process(work *types.Request, model *data.Model, preset *data.Preset) {
