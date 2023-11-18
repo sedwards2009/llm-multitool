@@ -3,7 +3,7 @@ package template
 import (
 	"fmt"
 	"os"
-	"sedwards2009/llm-workbench/internal/data"
+	"sedwards2009/llm-multitool/internal/data"
 	"strings"
 
 	"github.com/bobg/go-generics/v2/slices"

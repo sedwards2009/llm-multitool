@@ -11,7 +11,7 @@ export function TitleBar({ }: Props): JSX.Element {
   };
 
   return <div className="gui-packed-row width-100pc">
-    <h1 className="expand">LLM Workbench</h1>
+    <h1 className="expand">LLM Multitool</h1>
     <button className="small compact" onClick={onSettingsClicked}>
       <i className="fas fa-cog"></i>
       {" Settings"}

@@ -2,13 +2,13 @@ package engine
 
 import (
 	"log"
-	"sedwards2009/llm-workbench/internal/data"
-	"sedwards2009/llm-workbench/internal/data/responsestatus"
-	"sedwards2009/llm-workbench/internal/engine/config"
-	"sedwards2009/llm-workbench/internal/engine/ollama"
-	"sedwards2009/llm-workbench/internal/engine/openai"
-	"sedwards2009/llm-workbench/internal/engine/types"
-	"sedwards2009/llm-workbench/internal/presets"
+	"sedwards2009/llm-multitool/internal/data"
+	"sedwards2009/llm-multitool/internal/data/responsestatus"
+	"sedwards2009/llm-multitool/internal/engine/config"
+	"sedwards2009/llm-multitool/internal/engine/ollama"
+	"sedwards2009/llm-multitool/internal/engine/openai"
+	"sedwards2009/llm-multitool/internal/engine/types"
+	"sedwards2009/llm-multitool/internal/presets"
 )
 
 type Engine struct {

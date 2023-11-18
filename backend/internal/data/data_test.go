@@ -2,8 +2,8 @@ package data
 
 import (
 	"encoding/json"
-	"sedwards2009/llm-workbench/internal/data/responsestatus"
-	"sedwards2009/llm-workbench/internal/data/role"
+	"sedwards2009/llm-multitool/internal/data/responsestatus"
+	"sedwards2009/llm-multitool/internal/data/role"
 	"testing"
 )
 

@@ -1,4 +1,4 @@
-module sedwards2009/llm-workbench
+module sedwards2009/llm-multitool
 
 go 1.20
 

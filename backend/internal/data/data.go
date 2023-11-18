@@ -1,8 +1,8 @@
 package data
 
 import (
-	"sedwards2009/llm-workbench/internal/data/responsestatus"
-	"sedwards2009/llm-workbench/internal/data/role"
+	"sedwards2009/llm-multitool/internal/data/responsestatus"
+	"sedwards2009/llm-multitool/internal/data/role"
 )
 
 type SessionOverview struct {

@@ -18,7 +18,7 @@ type CommandLineArguments struct {
 func Parse() *CommandLineArguments {
 	result := &CommandLineArguments{}
 
-	parser := argparse.NewParser("llm-workbench", "Web UI for instructing Large Language Models")
+	parser := argparse.NewParser("llm-multitool", "Web UI for instructing Large Language Models")
 
 	configPath := parser.String("c", "config",
 		&argparse.Options{

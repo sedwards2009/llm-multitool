@@ -1,8 +1,8 @@
 package types
 
 import (
-	"sedwards2009/llm-workbench/internal/data"
-	"sedwards2009/llm-workbench/internal/data/responsestatus"
+	"sedwards2009/llm-multitool/internal/data"
+	"sedwards2009/llm-multitool/internal/data/responsestatus"
 )
 
 type Request struct {

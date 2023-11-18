@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"sedwards2009/llm-workbench/internal/data"
+	"sedwards2009/llm-multitool/internal/data"
 	"sort"
 	"strings"
 	"sync"

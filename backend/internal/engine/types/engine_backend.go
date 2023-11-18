@@ -1,6 +1,6 @@
 package types
 
-import "sedwards2009/llm-workbench/internal/data"
+import "sedwards2009/llm-multitool/internal/data"
 
 type EngineBackend interface {
 	ID() string

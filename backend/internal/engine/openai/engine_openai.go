@@ -5,11 +5,11 @@ import (
 	"errors"
 	"io"
 	"log"
-	"sedwards2009/llm-workbench/internal/data"
-	"sedwards2009/llm-workbench/internal/data/responsestatus"
-	"sedwards2009/llm-workbench/internal/data/role"
-	"sedwards2009/llm-workbench/internal/engine/config"
-	"sedwards2009/llm-workbench/internal/engine/types"
+	"sedwards2009/llm-multitool/internal/data"
+	"sedwards2009/llm-multitool/internal/data/responsestatus"
+	"sedwards2009/llm-multitool/internal/data/role"
+	"sedwards2009/llm-multitool/internal/engine/config"
+	"sedwards2009/llm-multitool/internal/engine/types"
 
 	"github.com/bobg/go-generics/v2/slices"
 

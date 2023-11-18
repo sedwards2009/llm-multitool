@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sedwards2009/llm-workbench/internal/data"
+	"sedwards2009/llm-multitool/internal/data"
 
 	"gopkg.in/yaml.v3"
 )

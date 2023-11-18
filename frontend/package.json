@@ -1,7 +1,7 @@
 {
-  "name": "llm-workbench",
+  "name": "llm-multitool",
   "version": "0.0.1",
-  "description": "Front-end for llm-workbench",
+  "description": "Front-end for llm-multitool",
   "main": "index.js",
   "scripts": {
     "start": "vite",

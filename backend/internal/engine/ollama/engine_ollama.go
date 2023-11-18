@@ -7,10 +7,10 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"sedwards2009/llm-workbench/internal/data"
-	"sedwards2009/llm-workbench/internal/data/responsestatus"
-	"sedwards2009/llm-workbench/internal/engine/config"
-	"sedwards2009/llm-workbench/internal/engine/types"
+	"sedwards2009/llm-multitool/internal/data"
+	"sedwards2009/llm-multitool/internal/data/responsestatus"
+	"sedwards2009/llm-multitool/internal/engine/config"
+	"sedwards2009/llm-multitool/internal/engine/types"
 )
 
 type OllamaEngineBackend struct {
