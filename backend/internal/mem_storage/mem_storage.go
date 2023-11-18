@@ -14,11 +14,16 @@ import (
 	"github.com/google/uuid"
 )
 
+type writeMessage struct {
+	session  *data.Session
+	stopChan chan bool
+}
+
 type SimpleStorage struct {
 	storagePath string
 	sessions    map[string]*data.Session
 	lock        sync.Mutex
-	writeChan   chan *data.Session
+	writeChan   chan writeMessage
 }
 
 const WRITE_BACK_QUEUE_LENGTH = 128
@@ -27,7 +32,7 @@ func New(storagePath string) *SimpleStorage {
 	instance := &SimpleStorage{
 		storagePath: storagePath,
 		sessions:    make(map[string]*data.Session, 16),
-		writeChan:   make(chan *data.Session, WRITE_BACK_QUEUE_LENGTH),
+		writeChan:   make(chan writeMessage, WRITE_BACK_QUEUE_LENGTH),
 	}
 	instance.scan()
 	go instance.writer(instance.writeChan)
@@ -216,7 +221,16 @@ func (this *SimpleStorage) WriteSession(session *data.Session) {
 	sessionCopy := copySession(session)
 	this.cacheSession(sessionCopy)
 
-	this.writeChan <- sessionCopy
+	this.writeChan <- writeMessage{session: sessionCopy}
+}
+
+func (this *SimpleStorage) Stop() {
+	this.lock.Lock()
+	defer this.lock.Unlock()
+
+	stopChan := make(chan bool, 0)
+	this.writeChan <- writeMessage{session: nil, stopChan: stopChan}
+	<-stopChan
 }
 
 type SessionDeadline struct {
@@ -229,7 +243,7 @@ const WRITE_BACK_DELAY = 3 * time.Second
 /*
  * Goroutine which receives Sessions to save and writes them back to disk.
  */
-func (this *SimpleStorage) writer(workChan chan *data.Session) {
+func (this *SimpleStorage) writer(workChan chan writeMessage) {
 	workPool := make(map[string]SessionDeadline)
 
 	setSession := func(session *data.Session) {
@@ -242,19 +256,32 @@ func (this *SimpleStorage) writer(workChan chan *data.Session) {
 		}
 	}
 
-	for {
+	running := true
+	var stopChan chan bool
+
+	for running {
 		timeout := time.After(1 * time.Second)
 		select {
-		case session := <-workChan:
-			setSession(session)
+		case msg := <-workChan:
+			if msg.session != nil {
+				setSession(msg.session)
+			} else {
+				running = false
+				stopChan = msg.stopChan
+			}
 		case <-timeout:
 			break
 		}
 
-		for {
+		for running {
 			select {
-			case session := <-workChan:
-				setSession(session)
+			case msg := <-workChan:
+				if msg.session != nil {
+					setSession(msg.session)
+				} else {
+					running = false
+					stopChan = msg.stopChan
+				}
 			default:
 				break
 			}
@@ -274,6 +301,12 @@ func (this *SimpleStorage) writer(workChan chan *data.Session) {
 			}
 		}
 	}
+
+	for _, deadlineSession := range workPool {
+		log.Printf("Writing %s back to disk.\n", deadlineSession.session.ID)
+		this.writeToDisk(deadlineSession.session)
+	}
+	stopChan <- true
 }
 
 func (this *SimpleStorage) writeToDisk(session *data.Session) {

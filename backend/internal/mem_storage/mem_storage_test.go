@@ -24,6 +24,7 @@ func TestRoundTrip(t *testing.T) {
 	storage := New(tempDir)
 	session := storage.NewSession()
 	session2 := storage.NewSession()
+	storage.Stop()
 
 	storage2 := New(tempDir)
 	overview := storage2.SessionOverview()

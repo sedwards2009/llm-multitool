@@ -626,4 +626,5 @@ func main() {
 	r := setupRouter()
 	fmt.Printf("\n    Starting server on http://%s\n\n", config.Address)
 	r.Run(config.Address)
+	sessionStorage.Stop()
 }
