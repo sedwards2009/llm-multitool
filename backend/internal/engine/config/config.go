@@ -16,7 +16,7 @@ type EngineBackendConfig struct {
 	Name         string    `yaml:"name"`
 	Address      *string   `yaml:"address"`
 	ApiTokenFrom *string   `yaml:"api_token_from"`
-	ApiToken     string    `yaml:"api_token,optional"`
+	ApiToken     string    `yaml:"api_token"`
 	Models       *[]string `yaml:"models"`
 	Variant      *string   `yaml:"variant"`
 }

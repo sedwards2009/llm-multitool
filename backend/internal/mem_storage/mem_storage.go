@@ -63,7 +63,7 @@ func (this *SimpleStorage) readSessionFromFile(filePath string) *data.Session {
 	var session data.Session
 	err = json.Unmarshal([]byte(content), &session)
 	if err != nil {
-		log.Println("Error unmarshalling JSON", err)
+		log.Printf("Error unmarshalling JSON from file '%s': %v\n", filePath, err)
 		return nil
 	}
 
