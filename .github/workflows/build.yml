@@ -42,9 +42,7 @@ jobs:
       run: npm run build
 
     - name: Move frontend artifacts
-      run: |
-        rm -r ./backend/resources || true
-        cp -r ./frontend/dist ./backend/resources
+      run: cp -r ./frontend/dist ./backend/resources
 
     - name: Build Backend
       working-directory: backend
