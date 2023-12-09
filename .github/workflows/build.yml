@@ -21,10 +21,10 @@ jobs:
               exe-name: llm-multitool-macos
     runs-on: ${{ matrix.os.os }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v5
       with:
         go-version: 1.21.1
 
@@ -57,11 +57,14 @@ jobs:
       run: 
         go test ./...
 
+    - name: Rename executable
+      run: mv backend/${{ matrix.os.build-name }} ${{ matrix.os.exe-name }}
+
     - name: Keep the executable
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ${{ matrix.os.exe-name }}
-        path: backend/${{ matrix.os.build-name }}
+        path: ${{ matrix.os.exe-name }}
 
   release-tag-as-draft:
     name: Release tag as a draft release
