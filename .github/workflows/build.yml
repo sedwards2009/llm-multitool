@@ -16,7 +16,7 @@ jobs:
             - os: windows-latest
               build-name: llm-multitool.exe
               exe-name: llm-multitool-windows-amd64.exe
-            - os: macos-latest]
+            - os: macos-latest
               build-name: llm-multitool
               exe-name: llm-multitool-macos
     runs-on: ${{ matrix.os.os }}
@@ -52,7 +52,7 @@ jobs:
 
     - name: Test backend
       working-directory: backend
-      run: 
+      run:
         go test ./...
 
     - name: Rename executable
