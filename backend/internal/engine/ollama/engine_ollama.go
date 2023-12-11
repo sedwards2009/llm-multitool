@@ -9,8 +9,11 @@ import (
 	"net/http"
 	"sedwards2009/llm-multitool/internal/data"
 	"sedwards2009/llm-multitool/internal/data/responsestatus"
+	"sedwards2009/llm-multitool/internal/data/role"
 	"sedwards2009/llm-multitool/internal/engine/config"
 	"sedwards2009/llm-multitool/internal/engine/types"
+
+	"github.com/bobg/go-generics/v2/slices"
 )
 
 type OllamaEngineBackend struct {
@@ -27,20 +30,26 @@ type model struct {
 	Name string `json:"name"`
 }
 
-type generatePayload struct {
-	Model   string                 `json:"model"`
-	Prompt  string                 `json:"prompt"`
-	Options generateOptionsPayload `json:"options"`
+type chatMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
 }
 
-type generateOptionsPayload struct {
+type chatPayload struct {
+	Model    string         `json:"model"`
+	Messages []chatMessage  `json:"messages"`
+	Options  optionsPayload `json:"options"`
+}
+
+type chatResponse struct {
+	Message *chatMessage `json:"message,omitempty"`
+
+	Done bool `json:"done"`
+}
+
+type optionsPayload struct {
 	Temperature float32 `json:"temperature"`
 	TopP        float32 `json:"top_p"`
-}
-
-type generateResponse struct {
-	Response *string `json:"response"`
-	Done     bool    `json:"done"`
 }
 
 func New(config *config.EngineBackendConfig) *OllamaEngineBackend {
@@ -58,11 +67,21 @@ func (this *OllamaEngineBackend) Process(work *types.Request, model *data.Model,
 	log.Printf("OllamaEngineBackend process(): Starting request")
 	work.SetStatusFunc(responsestatus.Running)
 	defer work.CompleteFunc()
-
-	payload := &generatePayload{
-		Model:  model.InternalModelID,
-		Prompt: work.Messages[0].Text,
-		Options: generateOptionsPayload{
+	log.Printf("OllamaEngineBackend Process(): Temperature: %f, TopP: %f\n", preset.Temperature, preset.TopP)
+	previousMessages := work.Messages[0 : len(work.Messages)-1]
+	payload := &chatPayload{
+		Model: model.InternalModelID,
+		Messages: slices.Map(previousMessages, func(m data.Message) chatMessage {
+			mRole := "user"
+			if m.Role == role.Assistant {
+				mRole = "assistant"
+			}
+			return chatMessage{
+				Role:    mRole,
+				Content: m.Text,
+			}
+		}),
+		Options: optionsPayload{
 			Temperature: preset.Temperature,
 			TopP:        preset.TopP,
 		},
@@ -70,11 +89,10 @@ func (this *OllamaEngineBackend) Process(work *types.Request, model *data.Model,
 
 	jsonData, _ := json.Marshal(payload)
 	bodyBytes := bytes.NewBuffer(jsonData)
-	url := *this.config.Address + "/api/generate"
-	log.Printf("url: %s\n", url)
+	url := *this.config.Address + "/api/chat"
 	resp, err := http.Post(url, "application/json", bodyBytes)
 	if err != nil {
-		log.Printf("OllamaEngineBackend Process(): CompletionStream error: %v\n", err)
+		log.Printf("OllamaEngineBackend Process(): ChatStream error: %v\n", err)
 		work.SetStatusFunc(responsestatus.Error)
 		return
 	}
@@ -89,31 +107,30 @@ func (this *OllamaEngineBackend) Process(work *types.Request, model *data.Model,
 	scanner := bufio.NewScanner(resp.Body)
 	for scanner.Scan() {
 		line := scanner.Text()
-
-		response := &generateResponse{}
+		response := &chatResponse{}
 		err := json.Unmarshal([]byte(line), &response)
 		if err != nil {
-			log.Printf("OllamaEngineBackend Process(): CompletionStream error: %v\n", err)
+			log.Printf("OllamaEngineBackend Process(): ChatStream error: %v\n", err)
 			work.SetStatusFunc(responsestatus.Error)
 			return
 		}
 		if response.Done {
 			break
 		}
-		if !work.AppendFunc(*response.Response) {
+		if !work.AppendFunc(*&response.Message.Content) {
 			break
 		}
 	}
 
 	// Check for errors that may have occurred during scanning.
 	if err := scanner.Err(); err != nil {
-		log.Printf("OllamaEngineBackend Process(): CompletionStream error: %v\n", err)
+		log.Printf("OllamaEngineBackend Process(): ChatStream error: %v\n", err)
 		work.SetStatusFunc(responsestatus.Error)
 		return
 	}
 
 	work.SetStatusFunc(responsestatus.Done)
-	log.Printf("OllamaEngineBackend process(): CompletionStream completed")
+	log.Printf("OllamaEngineBackend process(): ChatStream completed")
 }
 
 func (this *OllamaEngineBackend) ScanModels() []*data.Model {
@@ -150,7 +167,7 @@ func (this *OllamaEngineBackend) ScanModels() []*data.Model {
 			EngineID:         this.id,
 			InternalModelID:  modelInfo.Name,
 			SupportsContinue: false,
-			SupportsReply:    false,
+			SupportsReply:    true,
 		})
 	}
 	return result
