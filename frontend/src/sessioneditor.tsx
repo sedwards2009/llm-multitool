@@ -2,8 +2,9 @@ import { ChangeEvent, KeyboardEventHandler, useEffect, useState } from "react";
 import { ModelOverview, PresetOverview, Session, TemplateOverview, isSettingsValid } from "./data";
 import { navigate } from "raviger";
 import TextareaAutosize from "react-textarea-autosize";
-import { loadSession, newResponse, setSessionPrompt, deleteResponse, SessionMonitor, SessionMonitorState,
-  setSessionModel, newMessage, setSessionTemplate, setSessionPreset, continueMessage, abortResponse } from "./dataloading";
+import { loadSession, newResponse, setSessionPrompt, deleteResponse, deleteResponseMessage, SessionMonitor,
+  SessionMonitorState, setSessionModel, newMessage, setSessionTemplate, setSessionPreset, continueMessage,
+  abortResponse } from "./dataloading";
 import { ResponseEditor } from "./responseeditor";
 import { ModelSettings } from "./modelsettings";
 
@@ -93,6 +94,13 @@ export function SessionEditor({sessionId, modelOverview, presetOverview, templat
   const onDeleteClicked = (responseId: string) => {
     (async () => {
       await deleteResponse((session as Session).id, responseId);
+      await loadSessionData();
+    })();
+  };
+
+  const onDeleteMessageClicked = (responseId: string, messageId: string) => {
+    (async () => {
+      await deleteResponseMessage((session as Session).id, responseId, messageId);
       await loadSessionData();
     })();
   };
@@ -189,6 +197,7 @@ export function SessionEditor({sessionId, modelOverview, presetOverview, templat
               templateOverview={templateOverview}
               onAbortClicked={() => onAbortClicked(r.id)}
               onDeleteClicked={() => onDeleteClicked(r.id)}
+              onDeleteMessageClicked={(messageId: string) => onDeleteMessageClicked(r.id, messageId)}
               onReplySubmit={text => onReplySubmit(r.id, text)}
               onContinueClicked={() => onContinueClicked(r.id)}
             />)

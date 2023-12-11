@@ -185,6 +185,13 @@ export async function deleteResponse(sessionId: string, responseId: string): Pro
   return response.ok;
 }
 
+export async function deleteResponseMessage(sessionId: string, responseId: string, messageId: string): Promise<boolean> {
+  await flushQueues();
+  const response = await fetch(`${SERVER_BASE_URL}/session/${sessionId}/response/${responseId}/message/${messageId}`,
+    {method: "DELETE"});
+  return response.ok;
+}
+
 export async function newMessage(session: Session, responseId: string, reply: string): Promise<void> {
   await flushQueues();
 

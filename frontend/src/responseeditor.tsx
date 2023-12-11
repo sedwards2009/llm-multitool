@@ -12,11 +12,13 @@ export interface Props {
   onAbortClicked: () => void;
   onContinueClicked: () => void;
   onDeleteClicked: () => void;
+  onDeleteMessageClicked: (messageId: string) => void;
   onReplySubmit: (replyText: string) => void;
 }
 
 export function ResponseEditor({response, modelOverview, presetOverview, templateOverview,
-    onAbortClicked, onContinueClicked, onDeleteClicked, onReplySubmit: onReply}: Props): JSX.Element {
+    onAbortClicked, onContinueClicked, onDeleteClicked, onDeleteMessageClicked,
+    onReplySubmit: onReply}: Props): JSX.Element {
 
   const [isPromptOpen, setIsPromptOpen] = useState<boolean>(false);
   const [reply, setReply] = useState<string>("");
@@ -103,6 +105,7 @@ export function ResponseEditor({response, modelOverview, presetOverview, templat
       <ResponseMessage
         message={response.messages[0]}
         onContinueClicked={null}
+        onDeleteClicked={null}
       />
     }
     {response.messages.slice(1).map((m ,i) =>
@@ -111,6 +114,7 @@ export function ResponseEditor({response, modelOverview, presetOverview, templat
         message={m}
         onContinueClicked={supportsContinue && isSendEnabled && response.status === "Done" &&
           response.messages.length-1 === i+1 ? onContinueClicked : null}
+        onDeleteClicked={isSendEnabled && response.status === "Done" && m.role == "User"? () => onDeleteMessageClicked(m.id) : null}
       />
     )}
     {isSendEnabled && response.status === "Done" &&

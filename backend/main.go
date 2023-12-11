@@ -104,6 +104,7 @@ func setupRouter() *gin.Engine {
 	r.POST("/api/model/scan", handleModelScanPost)
 	r.PUT("/api/session/:sessionId/modelSettings", handleSessionModelSettingsPut)
 	r.POST("/api/session/:sessionId/response/:responseId/message", handleNewMessagePost)
+	r.DELETE("/api/session/:sessionId/response/:responseId/message/:messageId", handleResponseMessageDelete)
 	r.POST("/api/session/:sessionId/response/:responseId/continue", handleMessageContinuePost)
 	r.POST("/api/session/:sessionId/response/:responseId/abort", handleResponseAbortPost)
 	r.GET("/api/template", handleTemplateOverviewGet)
@@ -375,7 +376,7 @@ func handleResponseDelete(c *gin.Context) {
 
 	session := sessionStorage.ReadSession(sessionId)
 	if session == nil {
-		c.String(http.StatusInternalServerError, fmt.Sprintf("Unable to find session with ID %s\n", sessionId))
+		c.String(http.StatusNotFound, fmt.Sprintf("Unable to find session with ID %s\n", sessionId))
 		return
 	}
 
@@ -384,7 +385,7 @@ func handleResponseDelete(c *gin.Context) {
 		return r.ID != responseId
 	})
 	if originalLength == len(session.Responses) {
-		c.String(http.StatusInternalServerError, fmt.Sprintf("Unable to find response with ID %s\n", responseId))
+		c.String(http.StatusNotFound, fmt.Sprintf("Unable to find response with ID %s\n", responseId))
 		return
 	}
 	sessionStorage.WriteSession(session)
@@ -562,6 +563,43 @@ func handleNewMessagePost(c *gin.Context) {
 
 	llmEngine.Enqueue(foundResponse.Messages, appendFunc, completeFunc, setStatusFunc, foundSession.ModelSettings)
 	c.JSON(http.StatusOK, foundResponse)
+}
+
+func handleResponseMessageDelete(c *gin.Context) {
+	sessionId := c.Params.ByName("sessionId")
+	responseId := c.Params.ByName("responseId")
+	messageId := c.Params.ByName("messageId")
+
+	session := sessionStorage.ReadSession(sessionId)
+	if session == nil {
+		c.String(http.StatusNotFound, fmt.Sprintf("Unable to find session with ID %s\n", sessionId))
+		return
+	}
+
+	response := getResponseFromSessionByID(session, responseId)
+	if response == nil {
+		c.String(http.StatusNotFound, fmt.Sprintf("Unable to find respone with ID %s\n", responseId))
+		return
+	}
+
+	if deleteMessagePair(response, messageId) {
+		sessionStorage.WriteSession(session)
+		c.Status(http.StatusNoContent)
+	} else {
+		c.String(http.StatusNotFound, fmt.Sprintf("Unable to find message with ID %s\n", messageId))
+		return
+	}
+}
+
+func deleteMessagePair(response *data.Response, messageId string) bool {
+	messageIndex := slices.IndexFunc(response.Messages, func(m data.Message) bool {
+		return m.ID == messageId
+	})
+	if messageIndex == -1 {
+		return false
+	}
+	response.Messages = slices.Delete(response.Messages, messageIndex, messageIndex+2)
+	return true
 }
 
 func handleTemplateOverviewGet(c *gin.Context) {
