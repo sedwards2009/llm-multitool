@@ -83,7 +83,7 @@ jobs:
       - name: Download Windows executable
         uses: actions/download-artifact@v2
         with:
-          name: llm-multitool-windows.exe
+          name: llm-multitool-windows-amd64.exe
 
       - name: Create GH release
         uses: softprops/action-gh-release@v1
