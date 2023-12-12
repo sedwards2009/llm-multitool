@@ -17,7 +17,13 @@
 * Multiple persistent sessions and history
 
 
+## Downloading
+
+Executables for Windows, macOS, and Linux can be downloaded from the [Releases page](https://github.com/sedwards2009/llm-multitool/releases).
+
 ## Building from source
+
+Instead of downloading a precompiled executable you can also build it from source.
 
 ### Build Dependencies
 
@@ -41,7 +47,7 @@ Short answer:
 The backends in more detail:
 
 * **[OpenAI's ChatGPT](https://openai.com/chatgpt)** - Support for this backend is the most complete and stable. It does require setting up billing and an API token at OpenAI to use.
-* **[Ollama](https://ollama.ai/)** - This can run LLMs locally, is easy to set up, and supports Linux, Windows, and macOS. It currently has limited support in llm-multitool, it can't do chat, but should improve in the future as Ollama develops.
+* **[Ollama](https://ollama.ai/)** - This can run LLMs locally, is easy to set up, and supports Linux, Windows, and macOS. Version v0.1.14 or later is required.
 * **[LocalAI](https://localai.io/)** - This will also let you run LLMs locally, is easy to set up and supports many different LLMs, but only runs Linux and macOS. llm-multitool supports this quite well via it's OpenAI API.
 * **[Oobabooga text-generation-ui](https://github.com/oobabooga/)** - This backend can be a challenge to install and isn't really meant for end users. It does support have many LLM types. llm-multitool support for this mostly works but is buggy.
 
