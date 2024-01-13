@@ -44,6 +44,13 @@ export function ResponseEditor({response, modelOverview, presetOverview, templat
     setReply("");
   };
 
+  const replyMessages = response.messages.slice(1);
+  const onDeleteResponseMessageClicked = (replyMessageIndex: number) => {
+    const replyMessage = replyMessages[replyMessageIndex-1]; 
+    setReply(replyMessage.text);
+    onDeleteMessageClicked(replyMessage.id);
+  };
+
   let isSendEnabled = false;
   let model: Model | null = null;
   let supportsContinue = false;
@@ -108,13 +115,15 @@ export function ResponseEditor({response, modelOverview, presetOverview, templat
         onDeleteClicked={null}
       />
     }
-    {response.messages.slice(1).map((m ,i) =>
+    {replyMessages.map((m, i) =>
       <ResponseMessage
         key={m.id}
         message={m}
         onContinueClicked={supportsContinue && isSendEnabled && response.status === "Done" &&
           response.messages.length-1 === i+1 ? onContinueClicked : null}
-        onDeleteClicked={isSendEnabled && response.status === "Done" && m.role == "User"? () => onDeleteMessageClicked(m.id) : null}
+        onDeleteClicked={isSendEnabled && response.status === "Done"
+          ? (m.role == "User" ? () => onDeleteMessageClicked(m.id) : () => onDeleteResponseMessageClicked(i))
+          : null}
       />
     )}
     {isSendEnabled && response.status === "Done" &&
