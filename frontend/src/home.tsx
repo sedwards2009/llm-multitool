@@ -55,16 +55,17 @@ export function Home({ modelOverview, presetOverview, sessionOverview, templateO
   return (
     <div className="top-layout">
       <div className="session-list">
-        <SessionOverviewList
-          sessionOverview={sessionOverview}
-          selectedSessionId={sessionId}
-        />
         <button
           className={classNames({"primary": !isCreatingSession})}
           disabled={isCreatingSession}
           onClick={onNewSessionClick}>
             {isCreatingSession ? "Creating session..." : "New Session" }
         </button>
+        <p></p>
+        <SessionOverviewList
+          sessionOverview={sessionOverview}
+          selectedSessionId={sessionId}
+        />
       </div>
       <div className="session-tab">
         <SessionEditor

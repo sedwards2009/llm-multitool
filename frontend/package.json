@@ -13,6 +13,7 @@
   "license": "MIT",
   "dependencies": {
     "classnames": "^2.3.2",
+    "just-group-by": "^2.2.0",
     "lodash": "^4.17.21",
     "raviger": "^4.1.2",
     "react": "^18.2.0",
