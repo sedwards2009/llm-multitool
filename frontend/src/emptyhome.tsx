@@ -1,7 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import classNames from "classnames";
+
 import { SessionOverview } from "./data";
 import { navigate } from "raviger";
-import { NewSessionButton } from "./newsessionbutton";
+import { newSession } from "./dataloading";
 
 export interface Props {
   sessionOverview: SessionOverview;
@@ -16,7 +18,28 @@ export function EmptyHome({ sessionOverview, onSessionChange }: Props): JSX.Elem
     navigate(`/session/${sessionOverview.sessionSummaries[0].id}`);
   }, [sessionOverview]);
 
+  const [isCreatingSession, setIsCreatingSession] = useState<boolean>(false);
+
+  const onNewSessionClick = () => {
+    setIsCreatingSession(true);
+    (async () => {
+      const session = await newSession();
+      setIsCreatingSession(false);
+      if (session == null) {
+        console.log(`Unable to create a new session.`);
+      } else {
+        onSessionChange();
+        navigate(`/session/${session.id}`);
+      }
+    })();
+  };
+
   return <div>
-    <NewSessionButton onSessionChange={onSessionChange} />
+    <button
+      className={classNames({"primary": !isCreatingSession})}
+      disabled={isCreatingSession}
+      onClick={onNewSessionClick}>
+        {isCreatingSession ? "Creating session..." : "New Session" }
+    </button>
   </div>;
 }

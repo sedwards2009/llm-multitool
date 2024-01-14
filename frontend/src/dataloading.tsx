@@ -86,8 +86,16 @@ export async function loadSession(sessionId: string): Promise<Session | null> {
   return null;
 }
 
-export async function newSession(): Promise<Session | null> {
-  const response = await fetch(`${SERVER_BASE_URL}/session`, {method: "POST"});
+export async function newSession(defaults?: ModelSettings | null): Promise<Session | null> {
+  const fetchOptions: RequestInit = {
+    method: "POST",
+  };
+  if (defaults != null) {
+    fetchOptions.headers = {"Content-Type": "application/json"};
+    fetchOptions.body = JSON.stringify(defaults);
+  }
+
+  const response = await fetch(`${SERVER_BASE_URL}/session`, fetchOptions);
   try {
     if (response.ok) {
       return await response.json();

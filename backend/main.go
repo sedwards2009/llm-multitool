@@ -231,9 +231,23 @@ func handleNewSession(c *gin.Context) {
 		return
 	}
 
-	session.ModelSettings.ModelID = llmEngine.DefaultID()
-	session.ModelSettings.PresetID = presetDatabase.DefaultID()
-	session.ModelSettings.TemplateID = templates.DefaultID()
+	var data struct {
+		ModelID    string `json:"modelId"`
+		TemplateID string `json:"templateId"`
+		PresetID   string `json:"presetId"`
+	}
+
+	if err := c.ShouldBindJSON(&data); err != nil {
+		log.Printf("handleNewSession: Unable to parse POST")
+		session.ModelSettings.ModelID = llmEngine.DefaultID()
+		session.ModelSettings.PresetID = presetDatabase.DefaultID()
+		session.ModelSettings.TemplateID = templates.DefaultID()
+	} else {
+		session.ModelSettings.ModelID = data.ModelID
+		session.ModelSettings.PresetID = data.PresetID
+		session.ModelSettings.TemplateID = data.TemplateID
+	}
+
 	log.Printf("presetDatabase.DefaultID(): %s", presetDatabase.DefaultID())
 	sessionStorage.WriteSession(session)
 	c.JSON(http.StatusOK, session)

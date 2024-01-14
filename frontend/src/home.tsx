@@ -1,9 +1,11 @@
-import { ModelOverview, PresetOverview, SessionOverview, TemplateOverview } from "./data";
+import { ModelOverview, ModelSettings, PresetOverview, SessionOverview, TemplateOverview } from "./data";
 import { SessionEditor } from "./sessioneditor";
 import { SessionOverviewList } from "./sessionoverviewlist";
-import { NewSessionButton } from "./newsessionbutton";
 import { navigate } from "raviger";
-import { deleteSession } from "./dataloading";
+import { deleteSession, loadSession, newSession } from "./dataloading";
+import { useState } from "react";
+import classNames from "classnames";
+
 
 export interface Props {
   modelOverview: ModelOverview;
@@ -17,11 +19,36 @@ export interface Props {
 export function Home({ modelOverview, presetOverview, sessionOverview, templateOverview, sessionId, onSessionChange
     }: Props): JSX.Element {
 
+  const [isCreatingSession, setIsCreatingSession] = useState<boolean>(false);
+
   const onSessionDelete = () => {
     (async () => {
       await deleteSession(sessionId);
       onSessionChange();
       navigate("/");
+    })();
+  };
+
+  const onNewSessionClick = () => {
+    setIsCreatingSession(true);
+    (async () => {
+
+      let previousSettings: ModelSettings | null = null;
+      if (sessionId != null) {
+        const loadedSession = await loadSession(sessionId);
+        if (loadedSession != null) {
+          previousSettings = loadedSession.modelSettings;
+        }
+      }
+
+      const session = await newSession(previousSettings);
+      setIsCreatingSession(false);
+      if (session == null) {
+        console.log(`Unable to create a new session.`);
+      } else {
+        onSessionChange();
+        navigate(`/session/${session.id}`);
+      }
     })();
   };
 
@@ -32,7 +59,12 @@ export function Home({ modelOverview, presetOverview, sessionOverview, templateO
           sessionOverview={sessionOverview}
           selectedSessionId={sessionId}
         />
-        <NewSessionButton onSessionChange={onSessionChange} />
+        <button
+          className={classNames({"primary": !isCreatingSession})}
+          disabled={isCreatingSession}
+          onClick={onNewSessionClick}>
+            {isCreatingSession ? "Creating session..." : "New Session" }
+        </button>
       </div>
       <div className="session-tab">
         <SessionEditor
