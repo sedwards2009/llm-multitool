@@ -18,7 +18,7 @@ tasks:
     dir: ./frontend
     cmds:
       - npm install
-    
+
   frontend:
     cmds:
       - cd ./frontend && npm run build
@@ -31,6 +31,11 @@ tasks:
     cmds:
       - go generate -v -x ./...
       - go build .
+
+  backend-test:
+    dir: ./backend
+    cmds:
+      - go test ./...
 
   test:
     dir: ./backend
