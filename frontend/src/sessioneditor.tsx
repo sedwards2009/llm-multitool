@@ -4,9 +4,12 @@ import { navigate } from "raviger";
 import TextareaAutosize from "react-textarea-autosize";
 import { loadSession, newResponse, setSessionPrompt, deleteResponse, deleteResponseMessage, SessionMonitor,
   SessionMonitorState, setSessionModel, newMessage, setSessionTemplate, setSessionPreset, continueMessage,
-  abortResponse } from "./dataloading";
+  abortResponse,
+  uploadFileToSession,
+  deleteSessionAttachedFile} from "./dataloading";
 import { ResponseEditor } from "./responseeditor";
 import { ModelSettings } from "./modelsettings";
+import { FileAttachments } from "./fileattachments";
 
 export interface Props {
   sessionId: string;
@@ -134,6 +137,20 @@ export function SessionEditor({sessionId, modelOverview, presetOverview, templat
     })();
   };
 
+  const onUploadFile = (file: File) => {
+    (async () => {
+      await uploadFileToSession(session as Session, file);
+      await loadSessionData();
+    })();
+  };
+
+  const onDeleteFile = (filename: string) => {
+    (async () => {
+      await deleteSessionAttachedFile((session as Session).id, filename);
+      await loadSessionData();
+    })();
+  };
+
   const onPresetChange = (presetId: string) => {
     setSelectedPresetId(presetId);
     setSession(setSessionPreset(session as Session, presetId));
@@ -186,10 +203,17 @@ export function SessionEditor({sessionId, modelOverview, presetOverview, templat
                 Send
             </button>
           </div>
+          <FileAttachments
+            sessionId={sessionId}
+            onUploadFile={onUploadFile}
+            onDeleteFile={onDeleteFile}
+            attachedFiles={session.attachedFiles}
+          />
         </div>
         <div className="session-response-pane">
           {
             [...session.responses].reverse().map(r => <ResponseEditor
+              sessionId={sessionId}
               response={r}
               key={r.id}
               modelOverview={modelOverview}

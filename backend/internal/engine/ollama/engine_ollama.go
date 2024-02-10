@@ -3,10 +3,13 @@ package ollama
 import (
 	"bufio"
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sedwards2009/llm-multitool/internal/data"
 	"sedwards2009/llm-multitool/internal/data/responsestatus"
 	"sedwards2009/llm-multitool/internal/data/role"
@@ -31,8 +34,9 @@ type model struct {
 }
 
 type chatMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role    string   `json:"role"`
+	Content string   `json:"content"`
+	Images  []string `json:"images"`
 }
 
 type chatPayload struct {
@@ -76,9 +80,18 @@ func (this *OllamaEngineBackend) Process(work *types.Request, model *data.Model,
 			if m.Role == role.Assistant {
 				mRole = "assistant"
 			}
+
+			images := []string{}
+			if len(m.AttachedFiles) != 0 {
+				images = slices.Map(m.AttachedFiles, func(af *data.AttachedFile) string {
+					return readFileBase64(filepath.Join(work.AttachedFilesPath, af.Filename))
+				})
+			}
+
 			return chatMessage{
 				Role:    mRole,
 				Content: m.Text,
+				Images:  images,
 			}
 		}),
 		Options: optionsPayload{
@@ -131,6 +144,15 @@ func (this *OllamaEngineBackend) Process(work *types.Request, model *data.Model,
 
 	work.SetStatusFunc(responsestatus.Done)
 	log.Printf("OllamaEngineBackend process(): ChatStream completed")
+}
+
+func readFileBase64(filePath string) string {
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		log.Printf("OllamaEngineBackend: Error reading file %s. %v\n", filePath, err)
+		return ""
+	}
+	return base64.StdEncoding.EncodeToString(content)
 }
 
 func (this *OllamaEngineBackend) ScanModels() []*data.Model {

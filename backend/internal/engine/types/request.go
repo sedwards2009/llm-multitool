@@ -6,9 +6,10 @@ import (
 )
 
 type Request struct {
-	Messages      []data.Message
-	AppendFunc    func(string) bool
-	CompleteFunc  func()
-	SetStatusFunc func(status responsestatus.ResponseStatus)
-	ModelSettings *data.ModelSettings
+	Messages          []data.Message
+	AttachedFilesPath string
+	AppendFunc        func(string) bool
+	CompleteFunc      func()
+	SetStatusFunc     func(status responsestatus.ResponseStatus)
+	ModelSettings     *data.ModelSettings
 }

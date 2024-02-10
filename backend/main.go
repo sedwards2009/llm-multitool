@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"path"
+	"path/filepath"
 	"time"
 
 	"sedwards2009/llm-multitool/internal/argsparser"
@@ -96,6 +97,9 @@ func setupRouter() *gin.Engine {
 	r.POST("/api/session", handleNewSession)
 	r.GET("/api/session/:sessionId", handleSessionGet)
 	r.PUT("/api/session/:sessionId/prompt", handleSessionPromptPut)
+	r.POST("/api/session/:sessionId/file", handleSessionFilePost)
+	r.GET("/api/session/:sessionId/file/:fileId", handleSessionFileGet)
+	r.DELETE("/api/session/:sessionId/file/:fileId", handleSessionFileDelete)
 	r.DELETE("/api/session/:sessionId", handleSessionDelete)
 	r.POST("/api/session/:sessionId/response", handleResponsePost)
 	r.GET("/api/session/:sessionId/changes", handleSessionChangesGet)
@@ -299,7 +303,75 @@ func handleSessionPromptPut(c *gin.Context) {
 	c.JSON(http.StatusOK, session)
 }
 
-// Trigger the generation of a new response in a session used the current model and prompt.
+func handleSessionFilePost(c *gin.Context) {
+	sessionId := c.Params.ByName("sessionId")
+	session := sessionStorage.ReadSession(sessionId)
+	if session == nil {
+		c.String(http.StatusNotFound, "Session not found")
+		return
+	}
+
+	file, _ := c.FormFile("file")
+	filename, filepath := sessionStorage.SessionMakeAttachedFileFilepath(session.ID, file.Filename)
+
+	mimeType := c.Request.FormValue("mimeType")
+	originalFilename := c.Request.FormValue("filename")
+
+	c.SaveUploadedFile(file, filepath)
+
+	session.AttachedFiles = append(session.AttachedFiles,
+		&data.AttachedFile{Filename: filename, MimeType: mimeType, OriginalFilename: originalFilename})
+	sessionStorage.WriteSession(session)
+
+	var successResponse struct {
+		Filename string `json:"filename"`
+	}
+	successResponse.Filename = filename
+
+	c.JSON(http.StatusOK, &successResponse)
+}
+
+func handleSessionFileGet(c *gin.Context) {
+	sessionId := c.Params.ByName("sessionId")
+	session := sessionStorage.ReadSession(sessionId)
+	if session == nil {
+		c.String(http.StatusNotFound, "Session not found")
+		return
+	}
+
+	fileId := c.Params.ByName("fileId")
+	attachedFileNames := session.GetAttachedFileNames()
+	if !slices.Contains(attachedFileNames, fileId) {
+		c.String(http.StatusNotFound, "FileId not found")
+		return
+	}
+
+	c.File(filepath.Join(sessionStorage.GetStoragePath(), fileId))
+}
+
+func handleSessionFileDelete(c *gin.Context) {
+	sessionId := c.Params.ByName("sessionId")
+	session := sessionStorage.ReadSession(sessionId)
+	if session == nil {
+		c.String(http.StatusNotFound, "Session not found")
+		return
+	}
+
+	fileId := c.Params.ByName("fileId")
+	newAttachedFiles := slices.Filter(session.AttachedFiles, func(af *data.AttachedFile) bool {
+		return af.Filename != fileId
+	})
+
+	if len(session.AttachedFiles) == len(newAttachedFiles) {
+		c.String(http.StatusNotFound, "fileId not found")
+		return
+	}
+
+	session.AttachedFiles = newAttachedFiles
+	sessionStorage.WriteSession(session)
+}
+
+// Trigger the generation of a new response in a session using the current model and prompt.
 func handleResponsePost(c *gin.Context) {
 	sessionId := c.Params.ByName("sessionId")
 	session := sessionStorage.ReadSession(sessionId)
@@ -316,9 +388,10 @@ func handleResponsePost(c *gin.Context) {
 	formattedPrompt := templates.ApplyTemplate(session.ModelSettings.TemplateID, session.Prompt)
 
 	response.Messages = append(response.Messages, data.Message{
-		ID:   uuid.NewString(),
-		Role: role.User,
-		Text: formattedPrompt,
+		ID:            uuid.NewString(),
+		Role:          role.User,
+		Text:          formattedPrompt,
+		AttachedFiles: session.AttachedFiles,
 	})
 	response.Messages = append(response.Messages, data.Message{
 		ID:   uuid.NewString(),
@@ -357,7 +430,7 @@ func handleResponsePost(c *gin.Context) {
 		sessionBroadcaster.Send(sessionId, "changed")
 	}
 
-	llmEngine.Enqueue(response.Messages, appendFunc, completeFunc, setStatusFunc, session.ModelSettings)
+	llmEngine.Enqueue(sessionStorage.GetStoragePath(), response.Messages, appendFunc, completeFunc, setStatusFunc, session.ModelSettings)
 	c.JSON(http.StatusOK, response)
 }
 
@@ -452,7 +525,7 @@ func handleMessageContinuePost(c *gin.Context) {
 		sessionBroadcaster.Send(sessionId, "changed")
 	}
 
-	llmEngine.Enqueue(response.Messages, appendFunc, completeFunc, setStatusFunc,
+	llmEngine.Enqueue(sessionStorage.GetStoragePath(), response.Messages, appendFunc, completeFunc, setStatusFunc,
 		&response.ModelSettingsSnapshot.ModelSettings)
 	c.JSON(http.StatusOK, response)
 }
@@ -575,7 +648,8 @@ func handleNewMessagePost(c *gin.Context) {
 		sessionBroadcaster.Send(sessionId, "changed")
 	}
 
-	llmEngine.Enqueue(foundResponse.Messages, appendFunc, completeFunc, setStatusFunc, foundSession.ModelSettings)
+	llmEngine.Enqueue(sessionStorage.GetStoragePath(), foundResponse.Messages, appendFunc, completeFunc, setStatusFunc,
+		foundSession.ModelSettings)
 	c.JSON(http.StatusOK, foundResponse)
 }
 

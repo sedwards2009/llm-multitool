@@ -19,13 +19,20 @@ type Root struct {
 	Sessions []Session `json:"sessions"`
 }
 
+type AttachedFile struct {
+	Filename         string `json:"filename"`
+	MimeType         string `json:"mimeType"`
+	OriginalFilename string `json:"originalFilename"`
+}
+
 type Session struct {
-	ID                string         `json:"id"`
-	CreationTimestamp string         `json:"creationTimestamp"`
-	Title             string         `json:"title"`
-	Prompt            string         `json:"prompt"`
-	Responses         []*Response    `json:"responses"`
-	ModelSettings     *ModelSettings `json:"modelSettings"`
+	ID                string          `json:"id"`
+	CreationTimestamp string          `json:"creationTimestamp"`
+	Title             string          `json:"title"`
+	Prompt            string          `json:"prompt"`
+	AttachedFiles     []*AttachedFile `json:"attachedFiles"`
+	Responses         []*Response     `json:"responses"`
+	ModelSettings     *ModelSettings  `json:"modelSettings"`
 }
 
 type ModelSettings struct {
@@ -63,9 +70,10 @@ type Response struct {
 }
 
 type Message struct {
-	ID   string    `json:"id"`
-	Role role.Role `json:"role"`
-	Text string    `json:"text"`
+	ID            string          `json:"id"`
+	Role          role.Role       `json:"role"`
+	Text          string          `json:"text"`
+	AttachedFiles []*AttachedFile `json:"attachedFiles"`
 }
 
 type Template struct {

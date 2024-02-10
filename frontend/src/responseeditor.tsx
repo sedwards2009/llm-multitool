@@ -5,6 +5,7 @@ import { ResponseMessage } from "./responsemessage";
 import TextareaAutosize from "react-textarea-autosize";
 
 export interface Props {
+  sessionId: string;
   response: Response;
   modelOverview: ModelOverview;
   presetOverview: PresetOverview;
@@ -16,7 +17,7 @@ export interface Props {
   onReplySubmit: (replyText: string) => void;
 }
 
-export function ResponseEditor({response, modelOverview, presetOverview, templateOverview,
+export function ResponseEditor({sessionId, response, modelOverview, presetOverview, templateOverview,
     onAbortClicked, onContinueClicked, onDeleteClicked, onDeleteMessageClicked,
     onReplySubmit: onReply}: Props): JSX.Element {
 
@@ -46,7 +47,7 @@ export function ResponseEditor({response, modelOverview, presetOverview, templat
 
   const replyMessages = response.messages.slice(1);
   const onDeleteResponseMessageClicked = (replyMessageIndex: number) => {
-    const replyMessage = replyMessages[replyMessageIndex-1]; 
+    const replyMessage = replyMessages[replyMessageIndex-1];
     setReply(replyMessage.text);
     onDeleteMessageClicked(replyMessage.id);
   };
@@ -110,6 +111,7 @@ export function ResponseEditor({response, modelOverview, presetOverview, templat
     }
     {response.messages.length !==0 && isPromptOpen &&
       <ResponseMessage
+        sessionId={sessionId}
         message={response.messages[0]}
         onContinueClicked={null}
         onDeleteClicked={null}
@@ -117,6 +119,7 @@ export function ResponseEditor({response, modelOverview, presetOverview, templat
     }
     {replyMessages.map((m, i) =>
       <ResponseMessage
+        sessionId={sessionId}
         key={m.id}
         message={m}
         onContinueClicked={supportsContinue && isSendEnabled && response.status === "Done" &&

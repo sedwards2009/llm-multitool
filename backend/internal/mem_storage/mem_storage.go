@@ -39,6 +39,10 @@ func New(storagePath string) *SimpleStorage {
 	return instance
 }
 
+func (this *SimpleStorage) GetStoragePath() string {
+	return this.storagePath
+}
+
 func (this *SimpleStorage) scan() {
 	entries, err := os.ReadDir(this.storagePath)
 	if err != nil {
@@ -75,6 +79,9 @@ func (this *SimpleStorage) readSessionFromFile(filePath string) *data.Session {
 	if session.ModelSettings == nil {
 		session.ModelSettings = &data.ModelSettings{}
 	}
+	if session.AttachedFiles == nil {
+		session.AttachedFiles = make([]*data.AttachedFile, 0)
+	}
 	for _, r := range session.Responses {
 		if r.Messages == nil {
 			r.Messages = []data.Message{}
@@ -91,12 +98,31 @@ func (this *SimpleStorage) DeleteSession(id string) {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 
+	session := this.sessions[id]
+	if session == nil {
+		return
+	}
+
 	delete(this.sessions, id)
 	os.Remove(this.sessionFilepath(id))
+
+	for _, attachedFile := range session.AttachedFiles {
+		os.Remove(filepath.Join(this.storagePath, attachedFile.Filename))
+	}
 }
 
 func (this *SimpleStorage) sessionFilepath(sessionId string) string {
 	return filepath.Join(this.storagePath, sessionId+".json")
+}
+
+func (this *SimpleStorage) SessionMakeAttachedFileFilepath(sessionId string, originalFilename string) (string, string) {
+	extension := ""
+	if originalFilename != "" {
+		extension = filepath.Ext(originalFilename)
+	}
+
+	filename := sessionId + "_" + uuid.NewString() + extension
+	return filename, filepath.Join(this.storagePath, filename)
 }
 
 func (this *SimpleStorage) sessionSummary(session *data.Session) *data.SessionSummary {
@@ -129,6 +155,9 @@ func (this *SimpleStorage) SessionOverview() *data.SessionOverview {
 }
 
 func copySession(srcSession *data.Session) *data.Session {
+	newAttachedFiles := make([]*data.AttachedFile, len(srcSession.AttachedFiles))
+	copy(newAttachedFiles, srcSession.AttachedFiles)
+
 	copy := &data.Session{
 		ID:                srcSession.ID,
 		CreationTimestamp: srcSession.CreationTimestamp,
@@ -136,6 +165,7 @@ func copySession(srcSession *data.Session) *data.Session {
 		Prompt:            srcSession.Prompt,
 		Responses:         copyResponses(srcSession.Responses),
 		ModelSettings:     copyModelSettings(srcSession.ModelSettings),
+		AttachedFiles:     newAttachedFiles,
 	}
 	return copy
 }
@@ -198,6 +228,7 @@ func (this *SimpleStorage) NewSession() *data.Session {
 		CreationTimestamp: now.Format(time.RFC3339),
 		Responses:         []*data.Response{},
 		ModelSettings:     &data.ModelSettings{},
+		AttachedFiles:     []*data.AttachedFile{},
 	}
 	this.WriteSession(session)
 	return session
@@ -218,10 +249,27 @@ func (this *SimpleStorage) WriteSession(session *data.Session) {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 
+	storedSession := this.sessions[session.ID]
+	if storedSession != nil {
+		this.garbageCollectFiles(storedSession, session)
+	}
+
 	sessionCopy := copySession(session)
 	this.cacheSession(sessionCopy)
 
 	this.writeChan <- writeMessage{session: sessionCopy}
+}
+
+func (this *SimpleStorage) garbageCollectFiles(previousSession *data.Session, newSesion *data.Session) {
+	previousFilenames := previousSession.GetAttachedFileNames()
+	currentFilenames := newSesion.GetAttachedFileNames()
+	sort.Strings(currentFilenames)
+	for _, filename := range previousFilenames {
+		isFound := sort.SearchStrings(currentFilenames, filename) < len(currentFilenames)
+		if !isFound {
+			os.Remove(filepath.Join(this.GetStoragePath(), filename))
+		}
+	}
 }
 
 func (this *SimpleStorage) Stop() {

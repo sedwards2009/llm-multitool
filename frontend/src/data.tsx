@@ -13,6 +13,12 @@ export interface Root {
   sessions: Session[];
 }
 
+export interface AttachedFile {
+  filename: string;
+  mimeType: string;
+  originalFilename: string;
+}
+
 export interface Session {
   id: string;
   creationTimestamp: string;
@@ -20,6 +26,7 @@ export interface Session {
   prompt: string;
   responses: Response[];
   modelSettings: ModelSettings;
+  attachedFiles: AttachedFile[];
 }
 
 export interface ModelSettings {
@@ -53,6 +60,7 @@ export interface Message {
   id: string;
   role: Role;
   text: string;
+  attachedFiles: AttachedFile[] | null;
 }
 
 export interface Model {

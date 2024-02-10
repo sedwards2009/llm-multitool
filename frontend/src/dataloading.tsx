@@ -165,6 +165,35 @@ export function setSessionPreset(session: Session, presetId: string): Session {
   return {...session, modelSettings: newModelSettings};
 }
 
+export async function uploadFileToSession(session: Session, file: File): Promise<void> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  if (file.type != null) {
+    formData.append("mimeType", file.type);
+  }
+  if (file.name) {
+    formData.append("filename", file.name);
+  }
+
+  await fetch(`${SERVER_BASE_URL}/session/${session.id}/file`,
+    {
+      method: "POST",
+      body: formData,
+    });
+}
+
+export function fileURL(sessionId: string, fileId: string): string {
+  return `${SERVER_BASE_URL}/session/${sessionId}/file/${fileId}`;
+}
+
+export async function deleteSessionAttachedFile(sessionId: string, filename: string): Promise<boolean> {
+  await flushQueues();
+
+  const response = await fetch(`${SERVER_BASE_URL}/session/${sessionId}/file/${filename}`, {method: "DELETE"});
+  return response.ok;
+}
+
 export async function newResponse(session: Session): Promise<Response | null> {
   await flushQueues();
 

@@ -188,15 +188,17 @@ func (this *Engine) scanModels() {
 	this.models = allModels
 }
 
-func (this *Engine) Enqueue(messages []data.Message, appendFunc func(string) bool, completeFunc func(),
+func (this *Engine) Enqueue(attachedFilesPath string, messages []data.Message,
+	appendFunc func(string) bool, completeFunc func(),
 	setStatusFunc func(responsestatus.ResponseStatus), modelSettings *data.ModelSettings) {
 
 	payload := &types.Request{
-		Messages:      messages,
-		AppendFunc:    appendFunc,
-		CompleteFunc:  completeFunc,
-		SetStatusFunc: setStatusFunc,
-		ModelSettings: modelSettings,
+		AttachedFilesPath: attachedFilesPath,
+		Messages:          messages,
+		AppendFunc:        appendFunc,
+		CompleteFunc:      completeFunc,
+		SetStatusFunc:     setStatusFunc,
+		ModelSettings:     modelSettings,
 	}
 	message := &message{
 		messageType: messageType_Enqueue,
