@@ -1,2 +1,4 @@
 node_modules
 backend/resources
+data/
+dist/
