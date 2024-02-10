@@ -1,6 +1,6 @@
 module sedwards2009/llm-multitool
 
-go 1.20
+go 1.21
 
 require (
 	github.com/akamensky/argparse v1.4.0 // indirect
