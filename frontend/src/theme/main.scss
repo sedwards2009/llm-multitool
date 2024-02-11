@@ -77,6 +77,8 @@
 .uploaded-image {
   position: relative;
   display: inline-block;
+
+  cursor: pointer;
   & > IMG {
       max-width: 200px;
       max-height: 200px;
@@ -86,5 +88,24 @@
     position: absolute;
     top: 0px;
     right: 0px;
+  }
+}
+
+.file-preview {
+  position: fixed;
+  top: 0px;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+  background-color: change-color($background-color, $alpha: alpha($background-color) - 0.2);
+  cursor: pointer;
+
+  & > IMG {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    max-width: 90%;
+    max-height: 90%;
+    transform: translate(-50%, -50%);
   }
 }

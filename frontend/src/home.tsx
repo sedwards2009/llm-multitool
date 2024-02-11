@@ -3,8 +3,10 @@ import { SessionEditor } from "./sessioneditor";
 import { SessionOverviewList } from "./sessionoverviewlist";
 import { navigate } from "raviger";
 import { deleteSession, loadSession, newSession } from "./dataloading";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import classNames from "classnames";
+import { PreviewRequestContext } from "./filepreviewrequestcontext";
+import { FilePreview } from "./filepreview";
 
 
 export interface Props {
@@ -20,6 +22,9 @@ export function Home({ modelOverview, presetOverview, sessionOverview, templateO
     }: Props): JSX.Element {
 
   const [isCreatingSession, setIsCreatingSession] = useState<boolean>(false);
+
+  const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
+  const [previewFileMimetype, setPreviewFileMimetype] = useState<string | null>(null);
 
   const onSessionDelete = () => {
     (async () => {
@@ -52,32 +57,56 @@ export function Home({ modelOverview, presetOverview, sessionOverview, templateO
     })();
   };
 
+  const onPreviewFileUrlRequest = useMemo(() => {
+    return (fileUrl: string, fileMimetype:string): void => {
+      setPreviewFileUrl(fileUrl);
+      setPreviewFileMimetype(fileMimetype);
+    };
+  }, [sessionId]);
+
+  const closePreview = () => {
+    setPreviewFileUrl(null);
+    setPreviewFileMimetype(null);
+  };
+
   return (
-    <div className="top-layout">
-      <div className="session-list">
-        <button
-          className={classNames({"primary": !isCreatingSession})}
-          disabled={isCreatingSession}
-          onClick={onNewSessionClick}>
-            {isCreatingSession ? "Creating session..." : "New Session" }
-        </button>
-        <p></p>
-        <SessionOverviewList
-          sessionOverview={sessionOverview}
-          selectedSessionId={sessionId}
-        />
+    <>
+    <PreviewRequestContext.Provider value={onPreviewFileUrlRequest}>
+      <div className="top-layout">
+        <div className="session-list">
+          <button
+            className={classNames({"primary": !isCreatingSession})}
+            disabled={isCreatingSession}
+            onClick={onNewSessionClick}>
+              {isCreatingSession ? "Creating session..." : "New Session" }
+          </button>
+          <p></p>
+          <SessionOverviewList
+            sessionOverview={sessionOverview}
+            selectedSessionId={sessionId}
+          />
+        </div>
+        <div className="session-tab">
+          <SessionEditor
+            key={sessionId}
+            sessionId={sessionId}
+            modelOverview={modelOverview}
+            presetOverview={presetOverview}
+            templateOverview={templateOverview}
+            onSessionDelete={onSessionDelete}
+            onSessionChange={onSessionChange}
+          />
+        </div>
       </div>
-      <div className="session-tab">
-        <SessionEditor
-          key={sessionId}
-          sessionId={sessionId}
-          modelOverview={modelOverview}
-          presetOverview={presetOverview}
-          templateOverview={templateOverview}
-          onSessionDelete={onSessionDelete}
-          onSessionChange={onSessionChange}
-        />
-      </div>
-  </div>
+    </PreviewRequestContext.Provider>
+
+    {previewFileUrl != null &&
+      <FilePreview
+        fileUrl={previewFileUrl}
+        mimetype={previewFileMimetype}
+        onCloseRequest={closePreview}
+      />
+    }
+    </>
   );
 }
