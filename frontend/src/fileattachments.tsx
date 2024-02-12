@@ -1,6 +1,7 @@
-import { ChangeEvent, useRef } from "react";
+import { ChangeEvent, SyntheticEvent, useRef } from "react";
 import { AttachedFile } from "./data";
 import { FileAttachmentsList } from "./fileattachmentslist";
+import { isImage } from "./mimetype_utils";
 
 export interface Props {
   sessionId: string;
@@ -27,12 +28,36 @@ export function FileAttachments({sessionId, attachedFiles, onUploadFile, onDelet
     onUploadFile(files[0]);
   };
 
+  const onPaste = async (event: SyntheticEvent) => {
+    event.preventDefault();
+    const e = event.nativeEvent as ClipboardEvent;
+    const files = e.clipboardData?.files;
+    if (files == null) {
+      return;
+    }
+
+    for (const clipboardItem of files) {
+      if (isImage(clipboardItem.type)) {
+        onUploadFile(clipboardItem);
+      }
+    }
+  };
+
   return <div>
     <div className="gui-packed-row">
       <button className="small compact" onClick={onClick}>
         <i className="fas fa-paperclip"></i>
         {" Attach File"}
       </button>
+
+      <input
+        type="text"
+        className="char-max-width-12"
+        placeholder="Ctrl+V Paste Files Here"
+        onPaste={onPaste}
+        readOnly={true}
+      />
+
       <form>
         <input type="file" ref={fileInputRef} className="hidden" onChange={onFileChange} />
       </form>
