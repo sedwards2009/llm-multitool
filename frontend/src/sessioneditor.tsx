@@ -1,5 +1,5 @@
 import { ChangeEvent, KeyboardEventHandler, useEffect, useState } from "react";
-import { ModelOverview, PresetOverview, Session, TemplateOverview, isSettingsValid } from "./data";
+import { ModelOverview, PresetOverview, Session, TemplateOverview, getModelById, isSettingsValid } from "./data";
 import { navigate } from "raviger";
 import TextareaAutosize from "react-textarea-autosize";
 import { loadSession, newResponse, setSessionPrompt, deleteResponse, deleteResponseMessage, SessionMonitor,
@@ -158,6 +158,10 @@ export function SessionEditor({sessionId, modelOverview, presetOverview, templat
 
   const isSendEnabled = isSettingsValid(modelOverview, presetOverview, templateOverview, selectedModelId,
     selectedPresetId, selectedTemplateId);
+
+  const model = getModelById(modelOverview, selectedModelId);
+  const supportImages = model?.supportsImages == true;
+
   return <div className="session-editor">
     {session == null && <div>Loading</div>}
     {session && <>
@@ -203,12 +207,12 @@ export function SessionEditor({sessionId, modelOverview, presetOverview, templat
                 Send
             </button>
           </div>
-          <FileAttachments
+          {supportImages && <FileAttachments
             sessionId={sessionId}
             onUploadFile={onUploadFile}
             onDeleteFile={onDeleteFile}
             attachedFiles={session.attachedFiles}
-          />
+          />}
         </div>
         <div className="session-response-pane">
           {

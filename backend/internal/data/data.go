@@ -59,6 +59,7 @@ type Model struct {
 	InternalModelID  string
 	SupportsContinue bool `json:"supportsContinue"`
 	SupportsReply    bool `json:"supportsReply"`
+	SupportsImages   bool `json:"supportsImages"`
 }
 
 type Response struct {

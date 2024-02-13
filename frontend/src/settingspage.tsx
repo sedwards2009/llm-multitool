@@ -33,16 +33,20 @@ export function SettingsPage({ modelOverview, rescanModels }: Props): JSX.Elemen
           <th>Model</th>
           <th>Supports Continue</th>
           <th>Supports Replies</th>
+          <th>Supports Images</th>
         </thead>
-      {
-        modelOverview.models.map(m => {
-          return <tr key={m.id}>
-            <td>{m.name}</td>
-            <td>{m.supportsContinue ? "Yes" : "No"}</td>
-            <td>{m.supportsReply ? "Yes" : "No"}</td>
-          </tr>;
-        })
-      }
+        <tbody>
+        {
+          modelOverview.models.map(m => {
+            return <tr key={m.id}>
+              <td>{m.name}</td>
+              <td>{m.supportsContinue ? "Yes" : "No"}</td>
+              <td>{m.supportsReply ? "Yes" : "No"}</td>
+              <td>{m.supportsImages ? "Yes" : "No"}</td>
+            </tr>;
+          })
+        }
+        </tbody>
       </table>
 
       <button className="success" onClick={onRescanClicked} disabled={isScanning}>

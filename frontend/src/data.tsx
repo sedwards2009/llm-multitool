@@ -68,6 +68,7 @@ export interface Model {
   name: string;
   supportsContinue: boolean;
   supportsReply: boolean;
+  supportsImages: boolean;
 }
 
 export interface ModelOverview {

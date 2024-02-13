@@ -66,6 +66,7 @@ export function ResponseEditor({sessionId, response, modelOverview, presetOvervi
 
     supportsContinue = model?.supportsContinue === true;
   }
+  const supportsImages = model?.supportsImages == true;
 
   return <div className="card">
     <h3>Response</h3>
@@ -113,6 +114,7 @@ export function ResponseEditor({sessionId, response, modelOverview, presetOvervi
       <ResponseMessage
         sessionId={sessionId}
         message={response.messages[0]}
+        supportsImages={supportsImages}
         onContinueClicked={null}
         onDeleteClicked={null}
       />
@@ -122,6 +124,7 @@ export function ResponseEditor({sessionId, response, modelOverview, presetOvervi
         sessionId={sessionId}
         key={m.id}
         message={m}
+        supportsImages={supportsImages}
         onContinueClicked={supportsContinue && isSendEnabled && response.status === "Done" &&
           response.messages.length-1 === i+1 ? onContinueClicked : null}
         onDeleteClicked={isSendEnabled && response.status === "Done"

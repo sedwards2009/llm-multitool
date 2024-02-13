@@ -190,6 +190,7 @@ func (this *OllamaEngineBackend) ScanModels() []*data.Model {
 			InternalModelID:  modelInfo.Name,
 			SupportsContinue: false,
 			SupportsReply:    true,
+			SupportsImages:   true,
 		})
 	}
 	return result

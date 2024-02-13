@@ -131,6 +131,7 @@ func (this *OpenAiEngineBackend) ScanModels() []*data.Model {
 			InternalModelID:  modelInfo.ID,
 			SupportsContinue: true,
 			SupportsReply:    true,
+			SupportsImages:   false,
 		})
 
 		if this.config.Variant != nil && *this.config.Variant == config.VARIANT_OOBABOOGA {
