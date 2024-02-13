@@ -1,4 +1,5 @@
-node_modules
-backend/resources
-data/
-dist/
+/frontend/node_modules
+/backend/resources
+/data/
+/frontend/dist/
+/dist/
