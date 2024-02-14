@@ -1,7 +1,6 @@
 package mem_storage
 
 import (
-	"fmt"
 	"os"
 	"sedwards2009/llm-multitool/internal/data"
 	"testing"
