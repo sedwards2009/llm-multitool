@@ -51,8 +51,7 @@ func (this *OpenAiEngineBackend) Process(work *types.Request, model *data.Model,
 	ctx := context.Background()
 
 	req := openai.ChatCompletionRequest{
-		Model:     model.InternalModelID,
-		MaxTokens: 500,
+		Model: model.InternalModelID,
 		Messages: slices.Map(work.Messages, func(m data.Message) openai.ChatCompletionMessage {
 			openaiRole := openai.ChatMessageRoleUser
 			if m.Role == role.Assistant {
