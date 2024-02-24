@@ -40,9 +40,10 @@ type chatMessage struct {
 }
 
 type chatPayload struct {
-	Model    string         `json:"model"`
-	Messages []chatMessage  `json:"messages"`
-	Options  optionsPayload `json:"options"`
+	Model     string         `json:"model"`
+	Messages  []chatMessage  `json:"messages"`
+	Options   optionsPayload `json:"options"`
+	KeepAlive int            `json:"keep_alive"`
 }
 
 type chatResponse struct {
@@ -74,7 +75,8 @@ func (this *OllamaEngineBackend) Process(work *types.Request, model *data.Model,
 	log.Printf("OllamaEngineBackend Process(): Temperature: %f, TopP: %f\n", preset.Temperature, preset.TopP)
 	previousMessages := work.Messages[0 : len(work.Messages)-1]
 	payload := &chatPayload{
-		Model: model.InternalModelID,
+		Model:     model.InternalModelID,
+		KeepAlive: -1,
 		Messages: slices.Map(previousMessages, func(m data.Message) chatMessage {
 			mRole := "user"
 			if m.Role == role.Assistant {
